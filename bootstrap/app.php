@@ -3,6 +3,9 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -12,8 +15,20 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        $middleware->alias([
+            'role' => \App\Http\Middleware\Role::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->render(function(AccessDeniedHttpException $exc) {
+            return response()->json([
+                'message' => $exc->getMessage(),
+            ], Response::HTTP_FORBIDDEN);
+        });
+
+        $exceptions->render(function(NotFoundHttpException $exc) {
+            return response()->json([
+                'message' => 'Object not found',
+            ], Response::HTTP_NOT_FOUND);
+        });
     })->create();

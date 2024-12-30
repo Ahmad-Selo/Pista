@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\Role;
+use App\Models\Store;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -19,7 +21,7 @@ return new class extends Migration
             $table->timestamp('phone_verified_at')->nullable();
             $table->string('password');
             $table->string('photo')->nullable();
-            $table->enum('role', ['USER', 'ADMIN'])->default('USER');
+            $table->enum('role', array_map(fn($role) => $role->value, Role::cases()))->default('USER');
             $table->rememberToken();
             $table->timestamps();
         });
