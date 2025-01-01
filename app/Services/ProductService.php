@@ -146,6 +146,11 @@ class ProductService
         }
 
         if ($order) {
+            if($direction != 'asc')
+            {
+                $direction = 'desc';
+            }
+
             $orders = explode(' ', $order);
 
             foreach ($orders as $column) {
