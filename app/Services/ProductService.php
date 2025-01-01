@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\Store;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class ProductService
@@ -133,4 +134,26 @@ class ProductService
 
         return $product->delete();
     }
+
+    public function search($q, $filter, $order, $direction)
+    {
+        $query = Product::whereLike('name', '%' . $q . '%');
+
+        if ($filter) {
+            $filters = explode(' ', $filter);
+
+            $query->whereIn('category', $filters);
+        }
+
+        if ($order) {
+            $orders = explode(' ', $order);
+
+            foreach ($orders as $column) {
+                $query->orderBy($column, $direction);
+            }
+        }
+
+        return $query->get();
+    }
 }
+

@@ -94,4 +94,13 @@ class ProductController extends Controller
             'message' => 'Product deleted successfully',
         ]);
     }
+
+    public function search(Request $request)
+    {
+        $products = $this->productService->search($request->q, $request->filter, $request->order, $request->direction);
+
+        return response()->json([
+            'products' => $products
+        ]);
+    }
 }

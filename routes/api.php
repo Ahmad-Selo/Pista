@@ -42,8 +42,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('/', [ProductController::class, 'index'])->name('index');
 
-        Route::prefix('/{product}')->group(function() {
-            
+        Route::get('/search', [ProductController::class, 'search'])->name('search');
+
+        Route::prefix('/{product}')->group(function () {
+
             Route::patch('/', [ProductController::class, 'update'])->name('update');
 
             Route::delete('/', [ProductController::class, 'destroy'])->name('destroy');
