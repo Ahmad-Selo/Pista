@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Address;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\User;
@@ -15,10 +16,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory(10)->create();
-        Store::factory(10)->create();
+        User::factory()->has(Address::factory())->count(10)->create();
+        Store::factory()->has(Address::factory())->count(10)->create();
         Product::factory(10)->create();
     }
 }

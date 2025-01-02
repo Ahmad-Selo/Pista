@@ -30,4 +30,9 @@ class Store extends Model
     {
         return $this->hasMany(Product::class);
     }
+
+    public function address()
+    {
+        return $this->morphOne(Address::class, 'addressable');
+    }
 }

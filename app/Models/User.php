@@ -72,6 +72,11 @@ class User extends Authenticatable
         return $this->hasMany(Order::class);
     }
 
+    public function address()
+    {
+        return $this->morphOne(Address::class, 'addressable');
+    }
+
     public function hasRole(Role $role)
     {
         return $this->role == $role->value;
