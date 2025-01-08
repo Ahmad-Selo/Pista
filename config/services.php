@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'map' => [
+        'osrm' => [
+            'nearest' => 'http://router.project-osrm.org/nearest/v1/driving/',
+            'route' => 'http://router.project-osrm.org/route/v1/driving/',
+        ]
+    ]
 ];

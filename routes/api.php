@@ -29,7 +29,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
             });
 
-            Route::patch('/', [StoreController::class, 'update'])
+            Route::post('/', [StoreController::class, 'update'])
                 ->middleware('role:admin')
                 ->name('update');
 
@@ -46,7 +46,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::prefix('/{product}')->group(function () {
 
-            Route::patch('/', [ProductController::class, 'update'])->name('update');
+            Route::get('/', [ProductController::class, 'show'])->name('show');
+
+            Route::post('/', [ProductController::class, 'update'])->name('update');
 
             Route::delete('/', [ProductController::class, 'destroy'])->name('destroy');
         });

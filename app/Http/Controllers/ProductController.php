@@ -54,9 +54,7 @@ class ProductController extends Controller
     {
         $result = $this->productService->show($product);
 
-        return response()->json([
-            'product' => $result,
-        ]);
+        return response()->json($result);
     }
 
     /**

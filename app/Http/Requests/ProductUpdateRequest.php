@@ -26,10 +26,11 @@ class ProductUpdateRequest extends FormRequest
         return [
             'name' => ['string', 'max:255', 'unique:products,name'],
             'description' => ['string', 'max:255'],
-            'quantity' => ['numeric', 'integer', 'min:0'],
             'price' => ['numeric', 'gt:0'],
-            'photo' => ['string', 'max:255'],
+            'image' => ['image', 'mimes:jpg,jpeg,png', 'max:4096'],
             'category' => ['string', 'max:255'],
+            'discount' => ['numeric', 'integer', 'between:0,99'],
+            'quantity' => ['numeric', 'integer', 'min:0'],
         ];
     }
 }

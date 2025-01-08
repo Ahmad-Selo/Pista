@@ -25,10 +25,31 @@ class StoreCreateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255', 'unique:stores,name'],
-            'photo' => ['required', 'string', 'max:255'],
-            'delivery_time' => ['required', 'date_format:H:i:s'],
+            'store_name' => ['required', 'string', 'max:255', 'unique:stores,name'],
+            'image' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:4096'],
             'user_id' => ['required', 'numeric', 'integer', 'min:1', 'exists:users,id'],
+            'warehouse_name' => ['required', 'string', 'max:255', 'unique:warehouses,name'],
+            'address_name' => ['required', 'string', 'max:255'],
+            'longitude' => ['required', 'numeric', 'between:-90,90'],
+            'latitude' => ['required', 'numeric', 'between:-180,180'],
+        ];
+    }
+
+    public function validated($key = null, $default = null)
+    {
+        return [
+            'store' => [
+                'name' => $this->store_name,
+                'user_id' => $this->user_id,
+            ],
+            'warehouse' => [
+                'name' => $this->warehouse_name,
+            ],
+            'address' => [
+                'name' => $this->address_name,
+                'longitude' => $this->longitude,
+                'latitude' => $this->latitude,
+            ]
         ];
     }
 }

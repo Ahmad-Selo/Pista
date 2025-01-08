@@ -64,9 +64,7 @@ class StoreController extends Controller
     {
         $this->storeService->show($store);
 
-        return response()->json([
-            'store' => $store,
-        ]);
+        return response()->json($store);
     }
 
     /**

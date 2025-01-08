@@ -14,37 +14,140 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class ProductService
 {
-    private function getProductsForAdmin()
+    public const UPLOAD_PATH = '/products';
+
+    private FileService $fileService;
+
+    public function __construct(FileService $fileService)
     {
-        return Product::latest()->paginate(20);
+        $this->fileService = $fileService;
     }
 
-    private function getNewest(int $limit)
+    private function getFileContent($product, string $filename = null)
     {
-        return Product::latest()->where('quantity', '>', 0)->take($limit)->get();
+        if ($filename == null) {
+            $filename = $product->image;
+        }
+
+        $path = StoreService::UPLOAD_PATH . $product->store->id . self::UPLOAD_PATH;
+        return $this->fileService->getContent($path, $filename);
     }
 
-    private function getMostPopular(int $limit)
+    private function storeFile($product, $file, string $filename = null)
     {
-        return Product::orderBy('popularity', 'desc')
-            ->where('quantity', '>', 0)
-            ->take($limit)->get();
+        $path = StoreService::UPLOAD_PATH . $product->store->id . self::UPLOAD_PATH;
+        return $this->fileService->store($path, $file, $filename);
     }
 
-    private function getOffers(int $limit)
+    private function fileUrl($product, string $filename = null)
     {
-        return Product::latest('updated_at')
-            ->where('quantity', '>', 0)
-            ->where('discount', '>', 0)
-            ->take($limit)->get();
+        if ($filename == null) {
+            $filename = $product->image;
+        }
+
+        $path = StoreService::UPLOAD_PATH . $product->store->id . self::UPLOAD_PATH;
+        return $this->fileService->url($path, $filename);
+    }
+
+    private function renameFile($product, string $oldFilename, string $newFilename)
+    {
+        $path = StoreService::UPLOAD_PATH . $product->store->id . self::UPLOAD_PATH;
+        return $this->fileService->rename($path, $oldFilename, $newFilename);
+    }
+
+    private function deleteFile($product, string $filename = null)
+    {
+        if ($filename == null) {
+            $filename = $product->image;
+        }
+
+        $path = StoreService::UPLOAD_PATH . $product->store->id . self::UPLOAD_PATH;
+        return $this->fileService->delete($path, $filename);
+    }
+
+    private function getNewest(int $limit, $query = null)
+    {
+        if ($query == null) {
+            $products = Product::whereHas(
+                'inventory',
+                function ($query) {
+                    return $query->where('quantity', '>', 0);
+                }
+            )->latest()->take($limit)->get();
+        } else {
+            $products = $query->latest()->take($limit)->get();
+        }
+
+        foreach ($products as $product) {
+            $product->image = $this->fileUrl($product);
+        }
+
+        return $products;
+    }
+
+    private function getMostPopular(int $limit, $query = null)
+    {
+        if ($query == null) {
+            $products = Product::whereHas(
+                'inventory',
+                function ($query) {
+                    return $query->where('quantity', '>', 0);
+                }
+            )->whereNotNull('rate_sum')
+                ->whereNotNull('rate_count')
+                ->where('rate_count', '!=', 0)
+                ->orderByRaw('(rate_sum / rate_count) DESC')
+                ->take($limit)->get();
+        } else {
+            $products = $query->whereNotNull('rate_sum')
+                ->whereNotNull('rate_count')
+                ->where('rate_count', '!=', 0)
+                ->orderByRaw('(rate_sum / rate_count) DESC')
+                ->take($limit)->get();
+        }
+
+        foreach ($products as $product) {
+            $product->image = $this->fileUrl($product);
+        }
+
+        return $products;
+    }
+
+    private function getOffers(int $limit, $query = null)
+    {
+        if ($query == null) {
+            $products = Product::whereHas(
+                'inventory',
+                function ($query) {
+                    return $query->where('quantity', '>', 0);
+                }
+            )->where('discount', '>', 0)
+                ->latest('updated_at')->take($limit)->get();
+        } else {
+            $products = $query->where('discount', '>', 0)
+                ->latest('updated_at')->take($limit)->get();
+        }
+
+        foreach ($products as $product) {
+            $product->image = $this->fileUrl($product);
+        }
+
+        return $products;
     }
 
     private function getProductsForUser()
     {
+        $query = Product::whereHas(
+            'inventory',
+            function ($query) {
+                return $query->where('quantity', '>', 0);
+            }
+        );
+
         return [
-            'newest' => $this->getNewest(5),
-            'most_popular' => $this->getMostPopular(5),
-            'offers' => $this->getOffers(5),
+            'newest' => $this->getNewest(5, $query),
+            'most_popular' => $this->getMostPopular(5, $query),
+            'offers' => $this->getOffers(5, $query),
         ];
     }
 
@@ -67,10 +170,12 @@ class ProductService
         $user = Auth::user();
 
         if ($user->hasRole(Role::ADMIN)) {
-            $result = $this->getProductsForAdmin();
+            $result = Product::latest()->paginate(20);
         } else {
             $result = $this->getProductsForUser();
         }
+
+        $result = $this->getProductsForUser();
 
         return $result;
     }
@@ -79,47 +184,68 @@ class ProductService
     {
         $validated = $request->validated();
 
-        $validated['store_id'] = $store->id;
+        $image = $request->file('image');
 
-        Product::create($validated);
+        $filename = $validated['name'] . '_' . Str::uuid7();
+
+        $validated['image'] = $filename . '.' . $image->getClientOriginalExtension();
+
+        $product = $store->products()->create($validated);
+
+        $product->inventory()->create([
+            'warehouse_id' => $store->warehouse->id,
+            'quantity' => $validated['quantity'],
+            'last_restocked_date' => now(),
+        ]);
+
+        $this->storeFile(
+            $product,
+            $image,
+            $filename
+        );
 
         return true;
     }
 
     public function show(Product $product)
     {
-        $user = Auth::user();
+        $product->image = $this->fileUrl($product);
 
-        $rate_sum = $product->rate_sum;
-        $rate_count = $product->rate_count;
-
-        if ($rate_sum && $rate_count > 0) {
-            $rate = $rate_sum / $rate_count;
-        }
-
-        $result = [
-            'name' => $product->name,
-            'description' => $product->description,
-            'quantity' => $product->quantity,
-            'price' => $product->price,
-            'discount' => $product->discount,
-            'store_id' => $product->store->id,
-            'photo' => $product->photo,
-            'category' => $product->category,
-            'rate' => $rate,
-        ];
-
-        if ($user->hasRole(Role::ADMIN)) {
-            $result['created_at'] = $product->created_at;
-            $result['updated_at'] = $product->updated_at;
-        }
-
-        return $result;
+        return $product;
     }
 
     public function update(ProductUpdateRequest $request, Product $product)
     {
         $validated = $request->validated();
+
+        if ($request->hasFile('image')) {
+            $this->deleteFile($product);
+
+            $filename = ($request->has('name') ? $validated['name'] : $product->name) . '_' . Str::uuid7();
+
+            $validated['image'] = $this->storeFile(
+                $product,
+                $request->file('image'),
+                $filename
+            );
+        }
+
+        if ($request->has('name') && !$request->hasFile('image')) {
+            $newFilename = $validated['name'] . '_' . Str::uuid7();
+
+            $validated['image'] = $this->renameFile(
+                $product,
+                $product->image,
+                $newFilename
+            );
+        }
+
+        if (isset($validated['quantity'])) {
+            $product->inventory->update([
+                'quantity' => $validated['quantity'],
+                'last_restocked_date' => now(),
+            ]);
+        }
 
         return $product->update($validated);
     }
@@ -131,6 +257,8 @@ class ProductService
         $store = $product->store;
 
         $this->ownProductOrAdmin($store, $user);
+
+        $this->deleteFile($product);
 
         return $product->delete();
     }
@@ -146,8 +274,7 @@ class ProductService
         }
 
         if ($order) {
-            if($direction != 'asc')
-            {
+            if ($direction != 'asc') {
                 $direction = 'desc';
             }
 
