@@ -11,14 +11,11 @@ class Store extends Model
 
     protected $fillable = [
         'name',
-        'photo',
-        'delivery_time',
+        'image',
         'user_id',
     ];
 
     protected $hidden = [
-        'user_id',
-        'user',
     ];
 
     public function user()
@@ -26,13 +23,13 @@ class Store extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function warehouse()
+    {
+        return $this->hasOne(Warehouse::class);
+    }
+
     public function products()
     {
         return $this->hasMany(Product::class);
-    }
-
-    public function address()
-    {
-        return $this->morphOne(Address::class, 'addressable');
     }
 }

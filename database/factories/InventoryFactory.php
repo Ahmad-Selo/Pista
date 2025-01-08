@@ -2,14 +2,15 @@
 
 namespace Database\Factories;
 
-use App\Models\User;
+use App\Models\Inventory;
+use App\Models\Product;
 use App\Models\Warehouse;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Store>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Inventory>
  */
-class StoreFactory extends Factory
+class InventoryFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -19,9 +20,8 @@ class StoreFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->company(),
-            'image' => fake()->imageUrl(),
-            'user_id' => User::pluck('id')->random(),
+            'quantity' => fake()->numberBetween(0, 100000),
+            'last_restocked_date' => fake()->date(),
         ];
     }
 }

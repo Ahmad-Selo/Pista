@@ -1,6 +1,7 @@
 <?php
 
-use App\Models\User;
+use App\Models\Address;
+use App\Models\Store;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -11,11 +12,11 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('stores', function (Blueprint $table) {
+        Schema::create('warehouses', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique();
-            $table->string('image');
-            $table->foreignIdFor(User::class)->constrained()->cascadeOnDelete();
+            $table->string('name');
+            $table->foreignIdFor(Store::class)->constrained()->cascadeOnDelete();
+            $table->unsignedInteger('retrieval_time');
             $table->timestamps();
         });
     }
@@ -25,6 +26,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('stores');
+        Schema::dropIfExists('warehouses');
     }
 };

@@ -2,11 +2,12 @@
 
 namespace Database\Seeders;
 
-use App\Models\Address;
+use App\Models\Inventory;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Warehouse;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -16,8 +17,21 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory()->has(Address::factory())->count(10)->create();
-        Store::factory()->has(Address::factory())->count(10)->create();
-        Product::factory(10)->create();
+        $users = User::factory(20)->create();
+        $stores = Store::factory(10)->create();
+        $products = Product::factory(100)->create();
+
+        foreach ($stores as $store) {
+            Warehouse::factory()->create([
+                'store_id' => $store->id,
+            ]);
+        }
+
+        foreach ($products as $product) {
+            Inventory::factory()->create([
+                'warehouse_id' => $product->store->warehouse->id,
+                'product_id' => $product->id,
+            ]);
+        }
     }
 }

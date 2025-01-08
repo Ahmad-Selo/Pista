@@ -63,7 +63,7 @@ class User extends Authenticatable
     public function rates()
     {
         return $this->belongsToMany(Product::class, 'rates')
-            ->withPivot('user_rate')
+            ->withPivot('rate')
             ->withTimestamps();
     }
 

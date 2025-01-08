@@ -20,13 +20,14 @@ class ProductFactory extends Factory
         return [
             'name' => fake()->unique()->word(),
             'description' => fake()->text(255),
-            'quantity' => fake()->numberBetween(0, 1024),
             'price' => fake()->randomFloat(),
             'discount' => fake()->randomNumber(2),
             'popularity' => fake()->randomNumber(5),
-            'photo' => fake()->imageUrl(),
+            'store_id' => Store::pluck('id')->random(),
+            'image' => fake()->imageUrl(),
             'category'=>fake()->word(),
-            'store_id' => fake()->randomElement(Store::pluck('id')->toArray()),
+            'rate_sum' => fake()->optional()->randomNumber(3),
+            'rate_count' => fake()->optional()->numberBetween(0, 100),
             'created_at' => fake()->dateTimeBetween('-6 hours'),
             'updated_at' => fake()->dateTimeBetween('now', '+3 hours'),
         ];

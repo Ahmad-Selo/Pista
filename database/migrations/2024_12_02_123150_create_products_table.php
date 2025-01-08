@@ -16,12 +16,11 @@ return new class extends Migration
             $table->id();
             $table->string('name')->unique();
             $table->string('description');
-            $table->unsignedInteger('quantity');
             $table->float('price');
             $table->float('discount')->default(0.0);
             $table->unsignedBigInteger('popularity')->default(0);
             $table->foreignIdFor(Store::class)->constrained()->cascadeOnDelete();
-            $table->string('photo');
+            $table->string('image');
             $table->string('category');
             $table->float('rate_sum')->nullable();
             $table->unsignedInteger('rate_count')->nullable();

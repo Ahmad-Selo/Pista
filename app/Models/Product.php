@@ -12,9 +12,8 @@ class Product extends Model
     protected $fillable = [
         'name',
         'description',
-        'quantity',
         'price',
-        'photo',
+        'image',
         'category',
         'store_id',
     ];
@@ -22,6 +21,11 @@ class Product extends Model
     public function store()
     {
         return $this->belongsTo(Store::class);
+    }
+
+    public function inventory()
+    {
+        return $this->hasOne(Inventory::class);
     }
 
     public function orders()
@@ -40,7 +44,7 @@ class Product extends Model
     public function rates()
     {
         return $this->belongsToMany(User::class, 'rates')
-            ->withPivot('user_rate')
+            ->withPivot('rate')
             ->withTimestamps();
     }
 }
