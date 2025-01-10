@@ -3,8 +3,12 @@
 namespace App\Services;
 
 use App\Enums\Role;
+use App\Facades\FileManager;
 use App\Http\Requests\StoreCreateRequest;
 use App\Http\Requests\StoreUpdateRequest;
+use App\Http\Resources\ProductResource;
+use App\Http\Resources\StoreResource;
+use App\Models\Category;
 use App\Models\Store;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -16,13 +20,6 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 class StoreService
 {
     public const UPLOAD_PATH = 'uploads/stores/';
-
-    private FileService $fileService;
-
-    public function __construct(FileService $fileService)
-    {
-        $this->fileService = $fileService;
-    }
 
     private function ownership(Store $store, User $user): bool
     {
@@ -59,13 +56,12 @@ class StoreService
         if ($filename == null) {
             $filename = $store->image;
         }
-
-        return $this->fileService->getContent(self::UPLOAD_PATH . $store->id, $filename);
+        return FileManager::content(self::UPLOAD_PATH . $store->id, $filename);
     }
 
     private function storeFile($store, $file, string $filename = null)
     {
-        return $this->fileService->store(self::UPLOAD_PATH . $store->id, $file, $filename);
+        return FileManager::store(self::UPLOAD_PATH . $store->id, $file, $filename);
     }
 
     private function fileUrl($store, string $filename = null)
@@ -74,17 +70,24 @@ class StoreService
             $filename = $store->image;
         }
 
-        return $this->fileService->url(self::UPLOAD_PATH . $store->id, $filename);
+        return FileManager::url(self::UPLOAD_PATH . $store->id, $filename);
     }
 
     private function renameFile($store, string $oldFilename, string $newFilename)
     {
-        return $this->fileService->rename(self::UPLOAD_PATH . $store->id, $oldFilename, $newFilename);
+        return FileManager::rename(self::UPLOAD_PATH . $store->id, $oldFilename, $newFilename);
     }
 
     private function deleteDirectoryOrFile($store, string $filename = null)
     {
-        return $this->fileService->delete(self::UPLOAD_PATH . $store->id, $filename);
+        return FileManager::delete(self::UPLOAD_PATH . $store->id, $filename);
+    }
+
+    public function newest(int $limit)
+    {
+        $stores = Store::latest()->limit($limit)->get();
+
+        return StoreResource::collection($stores);
     }
 
     public function index()
@@ -96,9 +99,9 @@ class StoreService
 
     public function products(Store $store)
     {
-        $products = $store->products()->paginate(20);
+        $products = $store->products;
 
-        return $products;
+        return ProductResource::collection($products);
     }
 
     public function store(StoreCreateRequest $request)
@@ -107,25 +110,25 @@ class StoreService
 
         $image = $request->file('image');
 
-        $filename = $validated['store']['name'] . '_' . Str::uuid7();
-
-        $validated['store']['image'] = $filename . '.' . $image->getClientOriginalExtension();
+        $filename = $validated['store']['name'] . '_' . Str::uuid7() . '.' . $image->getClientOriginalExtension();
 
         $validated['warehouse']['retrieval_time'] = $this->getDuration(
             $validated['address']['longitude'],
             $validated['address']['latitude']
         );
 
-        $store = Store::create($validated['store']);
+        $store = Store::make($validated['store']);
 
-        $store->warehouse()->create($validated['warehouse'])
-            ->address()->create($validated['address']);
-
-        $this->storeFile(
+        $store->image = $this->storeFile(
             $store,
             $image,
             $filename
         );
+
+        $store->save();
+
+        $store->warehouse()->create($validated['warehouse'])
+            ->address()->create($validated['address']);
 
         return true;
     }
@@ -196,6 +199,40 @@ class StoreService
         $this->deleteDirectoryOrFile($store);
 
         return $store->delete();
+    }
+
+    public function search($q, $filter)
+    {
+        $qLike = '%' . $q . '%';
+
+        if ($filter) {
+            $filters = explode(' ', $filter);
+
+            foreach ($filters as $name) {
+                $categories[] = Category::where('name', $name)->value('id');
+            }
+
+            $queryA = Store::whereLike('name', $qLike)
+                ->whereHas('products', function ($query) use ($categories) {
+                    $query->whereIn('category_id', $categories);
+                });
+
+            $queryB = Store::whereHas('products', function ($query) use ($qLike, $categories) {
+                $query->whereLike('name', $qLike)->whereIn('category_id', $categories);
+            });
+
+
+        } else {
+            $queryA = Store::whereLike('name', $qLike);
+
+            $queryB = Store::whereHas('products', function ($query) use ($qLike) {
+                $query->whereLike('name', $qLike);
+            });
+        }
+
+        $query = $queryA->union($queryB);
+
+        return $query->orderBy('name')->get();
     }
 
 }

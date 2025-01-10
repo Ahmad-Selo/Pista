@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
             'role' => \App\Http\Middleware\Role::class,
+            'ownership' => \App\Http\Middleware\Ownership::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

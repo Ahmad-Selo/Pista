@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Services;
+namespace App\Libraries;
 
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-class FileService
+class FileManager
 {
-    public function getContent(string $path, string $filename = null)
+    public function content(string $path, string $filename = null)
     {
         if ($filename != null) {
             $path = Str::of($path)->finish('/');
@@ -26,6 +26,8 @@ class FileService
             $filename .= '.' . $file->getClientOriginalExtension();
         }
 
+        $filename = Str::snake($filename);
+
         $file->storeAs($path, $filename, 'public');
         return $filename;
     }
@@ -43,14 +45,16 @@ class FileService
     {
         $path = Str::of($path)->finish('/');
 
-        $content = $this->getContent($path, $oldFilename);
+        $content = self::content($path, $oldFilename);
         $extension = Str::afterLast($oldFilename, '.');
 
         $newFilename .= '.' . $extension;
 
+        $newFilename = Str::snake($newFilename);
+
         Storage::disk('public')->put($path . $newFilename, $content);
 
-        $this->delete($path, $oldFilename);
+        self::delete($path, $oldFilename);
 
         return $newFilename;
     }

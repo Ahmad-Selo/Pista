@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Category;
 use App\Models\Store;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -20,8 +21,8 @@ return new class extends Migration
             $table->float('discount')->default(0.0);
             $table->unsignedBigInteger('popularity')->default(0);
             $table->foreignIdFor(Store::class)->constrained()->cascadeOnDelete();
+            $table->foreignIdFor(Category::class);
             $table->string('image');
-            $table->string('category');
             $table->float('rate_sum')->nullable();
             $table->unsignedInteger('rate_count')->nullable();
             $table->timestamps();

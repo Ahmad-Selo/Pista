@@ -1,7 +1,10 @@
 <?php
 
+use App\Http\Controllers\FavoriteController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -40,9 +43,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::name('product.')->prefix('/products')->group(function () {
 
-        Route::get('/', [ProductController::class, 'index'])->name('index');
-
-        Route::get('/search', [ProductController::class, 'search'])->name('search');
+        Route::get('/', [ProductController::class, 'index'])
+            ->middleware('role:admin')
+            ->name('index');
 
         Route::prefix('/{product}')->group(function () {
 
@@ -55,7 +58,29 @@ Route::middleware('auth:sanctum')->group(function () {
 
     });
 
+    Route::get('/home', HomeController::class)->name('home');
+
+    Route::get('/search', SearchController::class)->name('search');
+
     // TODO: need to check {user} with user access token
-    Route::get('/users/{user}/stores', [UserController::class, 'stores'])->name('user.stores');
+
+    Route::name('user.')->prefix('/users')->group(function () {
+
+        Route::prefix('/{user}')->group(function () {
+
+            Route::get('/stores', [UserController::class, 'stores'])->name('store.index');
+
+            Route::name('favorite.')->prefix('/favorites')
+                ->middleware('ownership')->group(function () {
+
+                    Route::get('/', [FavoriteController::class, 'index'])->name('index');
+
+                    Route::post('/{product}', [FavoriteController::class, 'store'])->name('store');
+
+                    Route::delete('/{product}', [FavoriteController::class, 'destroy'])->name('destroy');
+                });
+
+        });
+    });
 });
 

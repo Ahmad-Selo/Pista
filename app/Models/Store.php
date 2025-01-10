@@ -16,6 +16,7 @@ class Store extends Model
     ];
 
     protected $hidden = [
+        'updated_at',
     ];
 
     public function user()
