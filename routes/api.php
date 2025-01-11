@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LoginController;
@@ -25,8 +26,9 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/', [StoreController::class, 'show'])->name('show');
 
             Route::name('product.')->prefix('/products')->group(function () {
-
                 Route::get('/', [StoreController::class, 'products'])->name('index');
+
+                Route::get('/available', [StoreController::class, 'availableProducts'])->name('available');
 
                 Route::post('/', [ProductController::class, 'store'])->name('store');
 
@@ -58,11 +60,25 @@ Route::middleware('auth:sanctum')->group(function () {
 
     });
 
+    Route::name('category.')->prefix('/categories')->group(function () {
+
+        Route::get('/', [CategoryController::class, 'index'])->name('index');
+
+        Route::middleware('role:admin')->group(function () {
+            Route::post('/', [CategoryController::class, 'store'])->name('store');
+
+            Route::prefix('/{category}')->group(function () {
+                Route::put('/', [CategoryController::class, 'update'])->name('update');
+
+                Route::delete('/', [CategoryController::class, 'destroy'])->name('destroy');
+            });
+
+        });
+    });
+
     Route::get('/home', HomeController::class)->name('home');
 
     Route::get('/search', SearchController::class)->name('search');
-
-    // TODO: need to check {user} with user access token
 
     Route::name('user.')->prefix('/users')->group(function () {
 

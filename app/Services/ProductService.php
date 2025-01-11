@@ -11,6 +11,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -18,6 +19,13 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 class ProductService
 {
     public const UPLOAD_PATH = '/products/';
+
+    private CategoryService $categoryService;
+
+    public function __construct(CategoryService $categoryService)
+    {
+        $this->categoryService = $categoryService;
+    }
 
     private function getFileContent($product, string $filename = null)
     {
@@ -61,67 +69,74 @@ class ProductService
         return FileManager::delete($path, $filename);
     }
 
-    public function best(int $limit)
+    public function best(int $limit, $categories)
     {
-        $products = Product::whereHas(
-            'inventory',
-            function ($query) {
-                return $query->where('quantity', '>', 0);
-            }
-        )->orderBy('popularity', 'desc')
-            ->limit($limit)->get();
+        $products = Product::inStock();
 
-        return ProductResource::collection($products);
+        if ($categories) {
+            $products->whereIn('category_id', $categories);
+        }
+
+        $products->orderBy('popularity', 'desc')->limit($limit);
+
+        return ProductResource::collection($products->get());
     }
 
-    private function newest(int $limit)
+    private function newest(int $limit, $categories)
     {
-        $products = Product::whereHas(
-            'inventory',
-            function ($query) {
-                return $query->where('quantity', '>', 0);
-            }
-        )->latest()->take($limit)->get();
+        $products = Product::inStock();
 
-        return ProductResource::collection($products);
+        if ($categories) {
+            $products->whereIn('category_id', $categories);
+        }
+
+        $products->latest()->take($limit);
+
+        return ProductResource::collection($products->get());
     }
 
-    private function popular(int $limit)
+    private function popular(int $limit, $categories)
     {
-        $products = Product::whereHas(
-            'inventory',
-            function ($query) {
-                return $query->where('quantity', '>', 0);
-            }
-        )->whereNotNull('rate_sum')
+        $products = Product::inStock();
+
+        if ($categories) {
+            $products->whereIn('category_id', $categories);
+        }
+
+        $products->whereNotNull('rate_sum')
             ->whereNotNull('rate_count')
             ->where('rate_count', '!=', 0)
             ->orderByRaw('rate_sum / rate_count desc')
-            ->take($limit)->get();
+            ->take($limit);
 
-        return ProductResource::collection($products);
+        return ProductResource::collection($products->get());
     }
 
-    private function offers(int $limit)
+    private function offers(int $limit, $categories)
     {
-        $products = Product::whereHas(
-            'inventory',
-            function ($query) {
-                return $query->where('quantity', '>', 0);
-            }
-        )->where('discount', '>', 0)
-            ->latest('updated_at')->take($limit)->get();
+        $products = Product::inStock();
 
-        return ProductResource::collection($products);
+        if ($categories) {
+            $products->whereIn('category_id', $categories);
+        }
+
+        $products->where('discount', '>', 0)
+            ->latest('updated_at')->take($limit);
+
+        return ProductResource::collection($products->get());
     }
 
-    public function highlights()
+    public function highlights(int $limit, $filter)
     {
+        $filters = explode(' ', $filter);
+
+        $categories = $this->categoryService->filtersToCategories($filters);
+
         return [
-            'best' => $this->best(5),
-            'newest' => $this->newest(5),
-            'most_popular' => $this->popular(5),
-            'offers' => $this->offers(5),
+            'best' => $this->best($limit, $categories),
+            'newest' => $this->newest($limit, $categories),
+            'most_popular' => $this->popular($limit, $categories),
+            'offers' => $this->offers($limit, $categories),
         ];
     }
 
@@ -231,14 +246,13 @@ class ProductService
 
     public function search($q, $filter, $order, $direction)
     {
-        $query = Product::whereLike('name', '%' . $q . '%');
+        $qLike = '%' . $q . '%';
+        $query = Product::inStock()->whereLike('name', $qLike);
 
         if ($filter) {
             $filters = explode(' ', $filter);
 
-            foreach ($filters as $name) {
-                $categories[] = Category::where('name', $name)->value('id');
-            }
+            $categories = $this->categoryService->filtersToCategories($filters);
 
             $query->whereIn('category_id', $categories);
         }

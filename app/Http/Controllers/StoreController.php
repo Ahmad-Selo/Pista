@@ -21,7 +21,7 @@ class StoreController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $stores = $this->storeService->index();
 
@@ -30,13 +30,18 @@ class StoreController extends Controller
         ]);
     }
 
-    public function products(Store $store)
+    public function availableProducts(Store $store, Request $request)
     {
-        $products = $this->storeService->products($store);
+        $result = $this->storeService->availableProducts($store, $request->filter);
 
-        return response()->json([
-            'products' => $products,
-        ]);
+        return response()->json($result);
+    }
+
+    public function products(Store $store, Request $request)
+    {
+        $result = $this->storeService->products($store, $request->filter);
+
+        return response()->json($result);
     }
 
     /**

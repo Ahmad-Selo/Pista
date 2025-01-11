@@ -33,4 +33,23 @@ class Store extends Model
     {
         return $this->hasMany(Product::class);
     }
+
+    public function categories()
+    {
+        return $this->hasManyThrough(
+            Category::class,
+            Product::class,
+            'store_id',
+            'id',
+            'id',
+            'category_id'
+        );
+    }
+
+    public function scopeHasCategories($query, $categories)
+    {
+        return $query->whereHas('products', function ($query) use ($categories) {
+            $query->hasCategories($categories);
+        });
+    }
 }

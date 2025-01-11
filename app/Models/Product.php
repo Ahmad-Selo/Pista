@@ -49,6 +49,31 @@ class Product extends Model
         );
     }
 
+    public function scopeInStock($query)
+    {
+        return $query->whereHas(
+            'inventory',
+            function ($query) {
+                $query->where('quantity', '>', 0);
+            }
+        );
+    }
+
+    public function scopeDiscounts($query)
+    {
+        return $query->where('discount', '>', 0);
+    }
+
+    public function scopeFullPrices($query)
+    {
+        return $query->where('discount', 0);
+    }
+
+    public function scopeHasCategories($query, $categories)
+    {
+        return $query->whereIn('category_id', $categories);
+    }
+
     public function store()
     {
         return $this->belongsTo(Store::class);

@@ -6,9 +6,9 @@ use App\Enums\Role;
 use App\Facades\FileManager;
 use App\Http\Requests\StoreCreateRequest;
 use App\Http\Requests\StoreUpdateRequest;
+use App\Http\Resources\CategoryResource;
 use App\Http\Resources\ProductResource;
 use App\Http\Resources\StoreResource;
-use App\Models\Category;
 use App\Models\Store;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -20,6 +20,13 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 class StoreService
 {
     public const UPLOAD_PATH = 'uploads/stores/';
+
+    private CategoryService $categoryService;
+
+    public function __construct(CategoryService $categoryService)
+    {
+        $this->categoryService = $categoryService;
+    }
 
     private function ownership(Store $store, User $user): bool
     {
@@ -83,11 +90,21 @@ class StoreService
         return FileManager::delete(self::UPLOAD_PATH . $store->id, $filename);
     }
 
-    public function newest(int $limit)
+    public function newest(int $limit, $filter)
     {
-        $stores = Store::latest()->limit($limit)->get();
+        $stores = Store::latest();
 
-        return StoreResource::collection($stores);
+        if ($filter) {
+            $filters = explode(' ', $filter);
+
+            $categories = $this->categoryService->filtersToCategories($filters);
+
+            $stores = Store::hasCategories($categories);
+        }
+
+        $stores->limit($limit);
+
+        return StoreResource::collection($stores->get());
     }
 
     public function index()
@@ -97,11 +114,52 @@ class StoreService
         return $stores;
     }
 
-    public function products(Store $store)
+    public function products(Store $store, $filter)
     {
-        $products = $store->products;
+        $products = $store->products();
 
-        return ProductResource::collection($products);
+        if ($filter) {
+            $filters = explode(' ', $filter);
+
+            $categories = $this->categoryService->filtersToCategories($filters);
+
+            if (in_array('discount', $filters)) {
+                $products->discounts();
+            } else if (in_array('full-price', $filters)) {
+                $products->fullPrices();
+            }
+
+            if ($categories) {
+                $products->hasCategories($categories);
+            }
+        }
+
+        $storeCategories = $store->categories()->distinct();
+
+        return [
+            'categories' => CategoryResource::collection($storeCategories->get()),
+            'products' => ProductResource::collection($products->get()),
+        ];
+    }
+
+    public function availableProducts(Store $store, $filter)
+    {
+        $products = $store->products()->inStock();
+
+        if ($filter) {
+            $filters = explode(' ', $filter);
+
+            $categories = $this->categoryService->filtersToCategories($filters);
+
+            $products->hasCategories($categories)->get();
+        }
+
+        $storeCategories = $store->categories()->distinct();
+
+        return [
+            'categories' => CategoryResource::collection($storeCategories->get()),
+            'products' => ProductResource::collection($products->get()),
+        ];
     }
 
     public function store(StoreCreateRequest $request)
@@ -208,17 +266,12 @@ class StoreService
         if ($filter) {
             $filters = explode(' ', $filter);
 
-            foreach ($filters as $name) {
-                $categories[] = Category::where('name', $name)->value('id');
-            }
+            $categories = $this->categoryService->filtersToCategories($filters);
 
-            $queryA = Store::whereLike('name', $qLike)
-                ->whereHas('products', function ($query) use ($categories) {
-                    $query->whereIn('category_id', $categories);
-                });
+            $queryA = Store::whereLike('name', $qLike)->hasCategories($categories);
 
             $queryB = Store::whereHas('products', function ($query) use ($qLike, $categories) {
-                $query->whereLike('name', $qLike)->whereIn('category_id', $categories);
+                $query->whereLike('name', $qLike)->hasCategories($categories);
             });
 
 

@@ -20,11 +20,11 @@ class HomeController extends Controller
         $this->storeService = $storeService;
     }
 
-    public function __invoke()
+    public function __invoke(Request $request)
     {
-        $result = $this->productService->highlights();
+        $result = $this->productService->highlights(5 ,$request->filter);
 
-        $result['brands'] = $this->storeService->newest(5);
+        $result['brands'] = $this->storeService->newest(5, $request->filter);
 
         $result['categories'] = CategoryResource::collection(Category::all());
 
