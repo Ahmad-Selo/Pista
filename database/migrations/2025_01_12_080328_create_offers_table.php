@@ -15,7 +15,7 @@ return new class extends Migration
         Schema::create('offers', function (Blueprint $table) {
             $table->id();
             $table->unsignedTinyInteger('discount');
-            $table->foreignIdFor(Product::class);
+            $table->foreignIdFor(Product::class)->constrained()->cascadeOnDelete();
             $table->dateTime('started_at');
             $table->dateTime('ended_at');
             $table->timestamps();
