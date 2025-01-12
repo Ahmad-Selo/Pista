@@ -18,7 +18,6 @@ return new class extends Migration
             $table->string('name')->unique();
             $table->string('description');
             $table->float('price');
-            $table->float('discount')->default(0.0);
             $table->unsignedBigInteger('popularity')->default(0);
             $table->foreignIdFor(Store::class)->constrained()->cascadeOnDelete();
             $table->foreignIdFor(Category::class);

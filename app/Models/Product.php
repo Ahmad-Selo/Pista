@@ -20,6 +20,11 @@ class Product extends Model
         'discount',
     ];
 
+    protected $casts = [
+        'created_at' => 'datetime:Y-m-d H:i:s',
+        'updated_at' => 'datetime:Y-m-d H:i:s',
+    ];
+
     protected $appends = ['rate', 'quantity'];
 
     protected $hidden = ['rate_sum', 'rate_count', 'updated_at', 'inventory', 'store_id', 'pivot'];
@@ -61,12 +66,16 @@ class Product extends Model
 
     public function scopeDiscounts($query)
     {
-        return $query->where('discount', '>', 0);
+        return $query->whereHas('offer', function ($query) {
+            $query->where('discount', '>', 0);
+        });
     }
 
     public function scopeFullPrices($query)
     {
-        return $query->where('discount', 0);
+        return $query->whereHas('offer', function ($query) {
+            $query->where('discount', '=', 0);
+        });
     }
 
     public function scopeHasCategories($query, $categories)
@@ -77,6 +86,11 @@ class Product extends Model
     public function store()
     {
         return $this->belongsTo(Store::class);
+    }
+
+    public function offer()
+    {
+        return $this->hasOne(Offer::class);
     }
 
     public function inventory()

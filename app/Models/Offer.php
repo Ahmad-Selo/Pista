@@ -5,26 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Inventory extends Model
+class Offer extends Model
 {
-    /** @use HasFactory<\Database\Factories\InventoryFactory> */
+    /** @use HasFactory<\Database\Factories\OfferFactory> */
     use HasFactory;
 
-    protected $fillable = [
-        'warehouse_id',
-        'quantity',
-        'last_restocked_date',
-    ];
-
     protected $casts = [
+        'started_at' => 'datetime:Y-m-d H:i:s',
+        'ended_at' => 'datetime:Y-m-d H:i:s',
         'created_at' => 'datetime:Y-m-d H:i:s',
         'updated_at' => 'datetime:Y-m-d H:i:s',
     ];
-
-    public function warehouse()
-    {
-        return $this->belongsTo(Warehouse::class);
-    }
 
     public function product()
     {

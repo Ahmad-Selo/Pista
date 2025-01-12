@@ -15,6 +15,11 @@ class Warehouse extends Model
         'retrieval_time',
     ];
 
+    protected $casts = [
+        'created_at' => 'datetime:Y-m-d H:i:s',
+        'updated_at' => 'datetime:Y-m-d H:i:s',
+    ];
+
     public function address()
     {
         return $this->morphOne(Address::class, 'addressable');

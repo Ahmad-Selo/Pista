@@ -7,7 +7,6 @@ use App\Facades\FileManager;
 use App\Http\Requests\ProductCreateRequest;
 use App\Http\Requests\ProductUpdateRequest;
 use App\Http\Resources\ProductResource;
-use App\Models\Category;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\User;
@@ -74,7 +73,7 @@ class ProductService
         $products = Product::inStock();
 
         if ($categories) {
-            $products->whereIn('category_id', $categories);
+            $products->hasCategories($categories);
         }
 
         $products->orderBy('popularity', 'desc')->limit($limit);
@@ -87,7 +86,7 @@ class ProductService
         $products = Product::inStock();
 
         if ($categories) {
-            $products->whereIn('category_id', $categories);
+            $products->hasCategories($categories);
         }
 
         $products->latest()->take($limit);
@@ -100,7 +99,7 @@ class ProductService
         $products = Product::inStock();
 
         if ($categories) {
-            $products->whereIn('category_id', $categories);
+            $products->hasCategories($categories);
         }
 
         $products->whereNotNull('rate_sum')
@@ -117,11 +116,10 @@ class ProductService
         $products = Product::inStock();
 
         if ($categories) {
-            $products->whereIn('category_id', $categories);
+            $products->hasCategories($categories);
         }
 
-        $products->where('discount', '>', 0)
-            ->latest('updated_at')->take($limit);
+        $products->discounts()->latest('updated_at')->take($limit);
 
         return ProductResource::collection($products->get());
     }
@@ -254,7 +252,7 @@ class ProductService
 
             $categories = $this->categoryService->filtersToCategories($filters);
 
-            $query->whereIn('category_id', $categories);
+            $query->hasCategories($categories);
         }
 
         if ($order) {

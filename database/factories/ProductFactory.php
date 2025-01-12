@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Category;
+use App\Models\Offer;
 use App\Models\Store;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -22,7 +23,7 @@ class ProductFactory extends Factory
             'name' => fake()->unique()->word(),
             'description' => fake()->text(255),
             'price' => fake()->randomFloat(),
-            'discount' => fake()->randomNumber(2),
+            'discount' => Offer::factory(1)->create(),
             'popularity' => fake()->randomNumber(5),
             'store_id' => Store::pluck('id')->random(),
             'image' => fake()->imageUrl(),
