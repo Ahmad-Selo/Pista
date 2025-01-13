@@ -28,8 +28,10 @@ class ProductCreateRequest extends FormRequest
             'description' => ['required', 'string', 'max:255'],
             'price' => ['required', 'numeric', 'gt:0'],
             'image' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:4096'],
-            'category' => ['required', 'string', 'max:255'],
+            'category' => ['required' ,'string', 'max:255', 'exists:categories,name'],
             'discount' => ['numeric', 'integer', 'between:0,99'],
+            'started_at' => ['required_with:discount', 'date_format:Y-m-d H:i:s', 'after_or_equal:now'],
+            'ended_at' => ['required_with:discount', 'date_format:Y-m-d H:i:s', 'after:started_at'],
             'quantity' => ['required', 'numeric', 'integer', 'min:0'],
         ];
     }

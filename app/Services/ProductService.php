@@ -7,6 +7,7 @@ use App\Facades\FileManager;
 use App\Http\Requests\ProductCreateRequest;
 use App\Http\Requests\ProductUpdateRequest;
 use App\Http\Resources\ProductResource;
+use App\Models\Category;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\User;
@@ -165,7 +166,7 @@ class ProductService
 
         $image = $request->file('image');
 
-        $filename = $validated['name'] . '_' . Str::uuid7() . '.' . $image->getClientOriginalExtension();
+        $filename = $validated['name'] . '_' . Str::uuid7();
 
         $product = $store->products()->make($validated);
 
@@ -175,6 +176,9 @@ class ProductService
             $filename
         );
 
+        $category = Category::where('name', '=', $validated['category'])->first();
+        $product->category()->associate($category);
+
         $product->save();
 
         $product->inventory()->create([
@@ -182,6 +186,10 @@ class ProductService
             'quantity' => $validated['quantity'],
             'last_restocked_date' => now(),
         ]);
+
+        if (isset($validated['discount'])) {
+            $product->offer()->create($validated);
+        }
 
         return true;
     }
@@ -196,6 +204,11 @@ class ProductService
     public function update(ProductUpdateRequest $request, Product $product)
     {
         $validated = $request->validated();
+
+        if (isset($validated['category'])) {
+            $category = Category::where('name', '=', $validated['category'])->first();
+            $product->category()->associate($category);
+        }
 
         if ($request->hasFile('image')) {
             $this->deleteFile($product);
@@ -224,6 +237,10 @@ class ProductService
                 'quantity' => $validated['quantity'],
                 'last_restocked_date' => now(),
             ]);
+        }
+
+        if (isset($validated['discount'])) {
+            $product->updateOrCreateOffer($validated);
         }
 
         return $product->update($validated);

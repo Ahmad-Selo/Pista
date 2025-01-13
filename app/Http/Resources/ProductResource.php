@@ -24,7 +24,7 @@ class ProductResource extends JsonResource
             'name' => $this->name,
             'description' => $this->description,
             'price' => $this->price,
-            'discount' => $this->offer->discount,
+            'discount' => $this->offer?->discount,
             'image' => FileManager::url($path, $this->image),
             'category' => new CategoryResource($this->category),
             'rate' => $this->rate,

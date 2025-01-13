@@ -32,11 +32,11 @@ class FileManager
         return $filename;
     }
 
-    public function url(string $path, string $filename = null)
+    public function url(string $path, string $filename)
     {
-        if ($filename != null) {
-            $path = Str::of($path)->finish('/');
-        }
+        $path = Str::of($path)->finish('/');
+
+        $filename = urlencode($filename);
 
         return url(Storage::url($path . $filename));
     }

@@ -16,8 +16,6 @@ class Product extends Model
         'description',
         'price',
         'image',
-        'category',
-        'discount',
     ];
 
     protected $casts = [
@@ -45,6 +43,11 @@ class Product extends Model
             get: fn(mixed $value, array $attributes) =>
             $user->favorites()->where('product_id', $attributes['id'])->exists()
         );
+    }
+
+    public function translations()
+    {
+        return $this->morphMany(Translation::class, 'translateable');
     }
 
     protected function quantity(): Attribute
@@ -91,6 +94,15 @@ class Product extends Model
     public function offer()
     {
         return $this->hasOne(Offer::class);
+    }
+
+    public function updateOrCreateOffer($validated)
+    {
+        if ($this->offer) {
+            return $this->offer->update($validated);
+        }
+
+        return $this->offer()->create($validated);
     }
 
     public function inventory()

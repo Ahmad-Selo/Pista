@@ -28,8 +28,10 @@ class ProductUpdateRequest extends FormRequest
             'description' => ['string', 'max:255'],
             'price' => ['numeric', 'gt:0'],
             'image' => ['image', 'mimes:jpg,jpeg,png', 'max:4096'],
-            'category' => ['string', 'max:255'],
+            'category' => ['string', 'max:255', 'exists:categories,name'],
             'discount' => ['numeric', 'integer', 'between:0,99'],
+            'started_at' => ['required_with:discount', 'date_format:Y-m-d H:i:s', 'after_or_equal:now'],
+            'ended_at' => ['required_with:discount', 'date_format:Y-m-d H:i:s', 'after:started_at'],
             'quantity' => ['numeric', 'integer', 'min:0'],
         ];
     }

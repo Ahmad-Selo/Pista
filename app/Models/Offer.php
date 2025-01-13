@@ -10,6 +10,12 @@ class Offer extends Model
     /** @use HasFactory<\Database\Factories\OfferFactory> */
     use HasFactory;
 
+    protected $fillable = [
+        'discount',
+        'started_at',
+        'ended_at',
+    ];
+
     protected $casts = [
         'started_at' => 'datetime:Y-m-d H:i:s',
         'ended_at' => 'datetime:Y-m-d H:i:s',
