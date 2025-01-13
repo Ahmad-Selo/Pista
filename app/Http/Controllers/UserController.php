@@ -5,12 +5,16 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Facades\FileManager;
 use Illuminate\Http\Request;
+use App\Models\VerificationCode;
+use App\Http\Requests\CodeRequest;
+use App\Http\Requests\PhoneRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use App\Http\Requests\UserUpdateRequest;
-use App\Http\Requests\CheckPasswordRequest;
-use App\Models\VerificationCode;
 use Illuminate\Support\Facades\Http;
+use App\Http\Requests\PasswordRequest;
+use App\Http\Requests\UserUpdateRequest;
+use App\Http\Requests\NewPasswordRequest;
+use App\Http\Requests\CheckPasswordRequest;
 use SomarKesen\TelegramGateway\Facades\TelegramGateway;
 
 class UserController extends Controller
@@ -51,10 +55,10 @@ class UserController extends Controller
             return response()->json(['message'=>'Your password updated successfully'], 200);
         }
 
-        return response()->json(['message'=>'Incorrect password'], 200);
+        return response()->json(['message'=>'Incorrect password'], 403);
     }
 
-    public function deleteAccount(Request $request){
+    public function deleteAccount(PasswordRequest $request){
         $user = request()->user();
         if(Hash::check($request->password,$user->password)){
             $this->deleteFile($user);
@@ -62,7 +66,7 @@ class UserController extends Controller
         $user->delete();
         return response()->json(['message'=>'account has been deleted'], 200);
     }
-        return response()->json(['message'=>'Incorrect password'], 401);
+        return response()->json(['message'=>'Incorrect password'], 403);
     }
 
     private function deleteFile($user, string $filename = null)
@@ -75,8 +79,12 @@ class UserController extends Controller
         return FileManager::delete($path, $filename);
     }
 
-    public function code(Request $request){
+    public function code(PhoneRequest $request){
         $phone=$this->transformPhoneNumber($request->phone);
+        $oldeCode=VerificationCode::where('phone',$phone)->first();
+        if($oldeCode){
+            $oldeCode->delete();
+        }
         $code=rand(1000,9999);
         VerificationCode::create([
             'code'=>$code,
@@ -93,17 +101,29 @@ class UserController extends Controller
                 ->post('https://api.ultramsg.com/instance103910/messages/chat', $params);
                  if ($response->successful())
                  {  return response()->json(
-                     ['message'=>'Verification Code has send successfully']);
+                     ['message'=>'Verification Code has send successfully'],200);
                      }
                  else {
-                     return response()->json(['message'=>'Unexpected HTTP status: ' . $response->status() . ' ' . $response->reason()], 200, );
+                     return response()->json(['message'=>'Unexpected HTTP status: ' . $response->status() . ' ' . $response->reason()], 401 );
                     }
                 }
                  catch (\Exception $e)
-                  { return response()->json(['error'=>$e->getMessage()], 200, );}
+                  { return response()->json(['error'=>$e->getMessage()], 500 );}
     }
 
-    public function setNewPassword(Request $request){
+    public function checkCode(CodeRequest $request){//***************************************************
+        $phone=$this->transformPhoneNumber($request->phone);
+        $code=$request->code;
+        $verificationCode=VerificationCode::where('phone',$phone)->latest()->first();
+        if($verificationCode->code==$code){
+            return response()->json(['message'=>'Correct code'],200);
+        }
+        else{
+            return response()->json(['message'=>'Incorrect code'],403);
+        }
+    }
+
+    public function setNewPassword(NewPasswordRequest $request){
 
         $phone=$this->transformPhoneNumber($request->phone);
         $code=$request->code;
@@ -114,11 +134,9 @@ class UserController extends Controller
             $user->password=Hash::make($newPassword);
             $user->save();
             $verificationCode->delete();
-
             return response()->json(['message'=>'Password updated successfully'], 200);
         }
-        return response()->json(['message'=>'Unvalid code'], 401);
-
+        return response()->json(['message'=>'Unvalid code'], 403);
 
     }
 
@@ -133,7 +151,7 @@ class UserController extends Controller
        private function fileUrl($user, string $filename = null)
        {
            if ($filename == null) {
-               $filename = $user->photo;
+               return null;
            }
 
            $path = UserController::UPLOAD_PATH . $user->id . '/';

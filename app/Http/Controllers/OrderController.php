@@ -32,7 +32,7 @@ class OrderController extends Controller
 
     public function store(OrderCreateRequest $request) {
         if (!count($request->data)) {
-            return response()->json(["message" => "There is no item"], 200);
+            return response()->json(["message" => "There is no item"], 401);
         }
 
         $index = [];
@@ -51,7 +51,7 @@ class OrderController extends Controller
         }
 
         if (empty($index)) {
-            return response()->json(["message" => "Invalid Order"], 200);
+            return response()->json(["message" => "Invalid Order"], 401);
         }
 
         $general_order = $this->createOrder($request);
@@ -60,7 +60,7 @@ class OrderController extends Controller
         foreach ($products as $product) {
             if ($product->inventory()->first()->quantity - $quantities[$product->id] < 0) {
                 DB::rollback();
-                return response()->json(["message" => "Invalid Order"], 200);
+                return response()->json(["message" => "Invalid Order"], 401);
             }
             $inventory_retrieval_time=Warehouse::where('store_id',$product->store()->first()->id)->first()->retrieval_time;
             $retrieval_time=max($retrieval_time,$inventory_retrieval_time);
@@ -72,7 +72,7 @@ class OrderController extends Controller
             }
             $offer=$product->offer()->first();
 
-            if ($offer && $offer->started_at->lt(Carbon::now()->addHours(3)) &&  $offer->ended_at->gt(Carbon::now()->addHours(3))){
+            if ($offer && $offer->started_at->lt(Carbon::now()) &&  $offer->ended_at->gt(Carbon::now())){
                 $price = $quantities[$product->id] * ($product->price-$offer->discount);
             }
             else{
@@ -105,7 +105,7 @@ class OrderController extends Controller
     public function updateState($SubOrderId){
         $subOrder=SubOrder::where('id',$SubOrderId)->first();
         if(request()->user()->role=='USER' || !request()->user()->stores()->where('id',$subOrder->store_id)->first()){
-            return response()->json(['message'=>'Unvalid serves'], 401);
+            return response()->json(['message'=>'Unvalid serves'], 403);
         }
         if($subOrder->state > 1){
             return response()->json(['message'=>'The order alredy delevering'], 401);
@@ -152,7 +152,7 @@ class OrderController extends Controller
     public function ShowSubOrders(Request $request){
 
         if(request()->user()->role=='USER'){
-            return response()->json(['message'=>'Unvalid serves'], 401);
+            return response()->json(['message'=>'Unvalid serves'], 403);
         }
 
         $stores=request()->user()->stores()->get();

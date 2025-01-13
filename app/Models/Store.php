@@ -33,4 +33,8 @@ class Store extends Model
     {
         return $this->hasMany(Product::class);
     }
+
+    public function subOrders(){
+        $this->hasMany(SubOrder::class);
+    }
 }

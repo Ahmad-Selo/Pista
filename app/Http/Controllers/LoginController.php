@@ -16,7 +16,7 @@ class LoginController extends Controller
         $phone= $this->transformPhoneNumber($request->phone);
         $verificationCode=VerificationCode::where('phone',$phone)->latest()->first();
         if(!($verificationCode && $verificationCode->code==$request->code)){
-            return response()->json(['message'=>'Unvalid code']);
+            return response()->json(['message'=>'Unvalid code'],403);
         }
         $verificationCode->delete();
         $user=User::create([
@@ -39,7 +39,7 @@ class LoginController extends Controller
         }
 
         $token=$user->createToken('user_token')->plainTextToken;
-            return response()->json(['message'=>'User registered Successfully','Token'=>$token,$user], 201);
+            return response()->json(['message'=>'User registered Successfully','Token'=>$token], 201);
     }
     public function login(UserLoginRequest $request){
         $phone= $this->transformPhoneNumber($request->phone);
@@ -48,7 +48,7 @@ class LoginController extends Controller
             $token=$user->createToken('user_token')->plainTextToken;
             return response()->json(['message'=>'User Loged Successfully','Token'=>$token], 200);
         }
-        return response()->json(['message'=>'Incorrect phone number or password'], 401);
+        return response()->json(['message'=>'Incorrect phone number or password'], 403);
     }
 
     public function logout(Request $request){

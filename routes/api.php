@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Route;
     return $request->user();
 });*/
 Route::post('/verificationCode',[UserController::class, 'code']);
+Route::post('setNewPassword/checkCode',[UserController::class, 'checkCode']);
 Route::post('/setNewPassword',[UserController::class, 'setNewPassword']);
 Route::post('/register',[LoginController::class, 'register']);
 Route::post('/login',[LoginController::class, 'login']);
