@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Http\Requests\UserUpdateRequest;
 use App\Http\Requests\CheckPasswordRequest;
 use App\Models\VerificationCode;
+use Illuminate\Support\Facades\Http;
 use SomarKesen\TelegramGateway\Facades\TelegramGateway;
 
 class UserController extends Controller
@@ -81,8 +82,25 @@ class UserController extends Controller
             'code'=>$code,
             'phone'=>$phone
         ]);
-        return $response = TelegramGateway::sendVerificationMessage($phone,
-        [ 'code' => $code, 'ttl' => 300, 'callback_url' => 'https://yourapp.com/callback', ]);
+        // return $response = TelegramGateway::sendVerificationMessage($phone,
+        // [ 'code' => $code, 'ttl' => 300, 'callback_url' => 'https://yourapp.com/callback', ]);
+        $params = array(
+             'token' => '7ziu5kh2gwzgcvon',
+              'to' => $phone,
+              'body' => 'your verification code is : '.$code );
+               try {
+                 $response = Http::asForm()->withHeaders([ 'Content-Type' => 'application/x-www-form-urlencoded', ])
+                ->post('https://api.ultramsg.com/instance103910/messages/chat', $params);
+                 if ($response->successful())
+                 {  return response()->json(
+                     ['message'=>'Verification Code has send successfully']);
+                     }
+                 else {
+                     return response()->json(['message'=>'Unexpected HTTP status: ' . $response->status() . ' ' . $response->reason()], 200, );
+                    }
+                }
+                 catch (\Exception $e)
+                  { return response()->json(['error'=>$e->getMessage()], 200, );}
     }
 
     public function setNewPassword(Request $request){
@@ -121,6 +139,7 @@ class UserController extends Controller
            $path = UserController::UPLOAD_PATH . $user->id . '/';
            return FileManager::url($path, $filename);
        }
+
 
 }
 
