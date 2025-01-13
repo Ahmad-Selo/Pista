@@ -196,9 +196,7 @@ class ProductService
 
     public function show(Product $product)
     {
-        $product->image = $this->fileUrl($product);
-
-        return $product;
+        return new ProductResource($product);
     }
 
     public function update(ProductUpdateRequest $request, Product $product)

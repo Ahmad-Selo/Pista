@@ -20,7 +20,7 @@ return new class extends Migration
             $table->float('price');
             $table->unsignedBigInteger('popularity')->default(0);
             $table->foreignIdFor(Store::class)->constrained()->cascadeOnDelete();
-            $table->foreignIdFor(Category::class);
+            $table->foreignIdFor(Category::class)->constrained()->restrictOnDelete();
             $table->string('image');
             $table->float('rate_sum')->nullable();
             $table->unsignedInteger('rate_count')->nullable();

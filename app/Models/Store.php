@@ -39,6 +39,10 @@ class Store extends Model
         return $this->hasMany(Product::class);
     }
 
+    public function subOrders(){
+        return $this->hasMany(SubOrder::class);
+    }
+
     public function translations()
     {
         return $this->morphMany(Translation::class, 'translateable');

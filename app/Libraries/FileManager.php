@@ -32,8 +32,12 @@ class FileManager
         return $filename;
     }
 
-    public function url(string $path, string $filename)
+    public function url(string $path, string|null $filename)
     {
+        if ($filename == null) {
+            return null;
+        }
+
         $path = Str::of($path)->finish('/');
 
         $filename = urlencode($filename);

@@ -76,8 +76,8 @@ class Product extends Model
 
     public function scopeFullPrices($query)
     {
-        return $query->whereHas('offer', function ($query) {
-            $query->where('discount', '=', 0);
+        return $query->whereDoesntHave('offer', function ($query) {
+            $query->where('discount', '>', 0);
         });
     }
 
@@ -132,6 +132,13 @@ class Product extends Model
     {
         return $this->belongsToMany(User::class, 'rates')
             ->withPivot('rate')
+            ->withTimestamps();
+    }
+
+    public function subOrders()
+    {
+        return $this->belongsToMany(SubOrder::class, 'product_sub_order')
+            ->withPivot('quantity', 'price')
             ->withTimestamps();
     }
 }

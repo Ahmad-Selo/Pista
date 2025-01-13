@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CategoryRequest;
 use App\Models\Category;
 use App\Services\CategoryService;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -59,12 +60,18 @@ class CategoryController extends Controller
 
     public function destroy(Category $category)
     {
-        $deleted = $this->categoryService->destroy($category);
-
-        if (!$deleted) {
-            return response()->json([
-                'message' => 'An error occurred',
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        try {
+            $this->categoryService->destroy($category);
+        } catch (QueryException $e) {
+            if ($e->getCode() == '23000') {
+                return response()->json([
+                    'message' => 'Cannot delete this category because it is associated with other products',
+                ], Response::HTTP_BAD_REQUEST);
+            } else {
+                return response()->json([
+                    'message' => 'An error occurred',
+                ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
         }
 
         return response()->json([

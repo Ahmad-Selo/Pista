@@ -67,9 +67,9 @@ class StoreController extends Controller
      */
     public function show(Store $store)
     {
-        $this->storeService->show($store);
+        $storeResponse = $this->storeService->show($store);
 
-        return response()->json($store);
+        return response()->json($storeResponse);
     }
 
     /**

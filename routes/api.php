@@ -4,13 +4,12 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LoginController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
-
-Route::post('/login/{id}', [LoginController::class, 'login'])->name('login');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::name('store.')->prefix('/stores')->group(function () {
@@ -100,3 +99,27 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 
+Route::post('/verificationCode',[UserController::class, 'code']);
+Route::post('/setNewPassword',[UserController::class, 'setNewPassword']);
+Route::post('/register',[LoginController::class, 'register']);
+Route::post('/login',[LoginController::class, 'login']);
+Route::delete('/logout',[LoginController::class, 'logout'])->middleware('auth:sanctum');
+Route::prefix('/user')->middleware('auth:sanctum')->group(function(){
+    Route::post('/resetPassword',[UserController::class, 'resetPassword']);
+    Route::delete('/delete-account',[UserController::class, 'deleteAccount']);
+    Route::post('/',[UserController::class, 'update'])->name('update');
+    Route::get('/',[UserController::class, 'show'])->name('show');
+    Route::post('/resetPassword',[UserController::class, 'resetPassword']);
+});
+Route::name('order.')->prefix('/order')->middleware('auth:sanctum')->group(function(){
+    Route::prefix('/user')->group(function(){
+        Route::get('/',[OrderController::class, 'index'])->name('index');
+        Route::post('/',[OrderController::class,'store'])->name('store');
+        Route::get('/update/{orderId}',[OrderController::class, 'update'])->name('update');
+        Route::delete('/{orderId}',[OrderController::class, 'destroy'])->name('delete');});
+
+    Route::name('store.')->prefix('/store')->middleware('auth:sanctum')->group(function(){
+        Route::get('/',[OrderController::class, 'ShowSubOrders'])->name('index');
+        Route::patch('/{subOrderId}/updateState',[OrderController::class,'updateState'])->name('updateState');
+});
+});

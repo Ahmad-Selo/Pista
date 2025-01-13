@@ -168,22 +168,22 @@ class StoreService
 
         $image = $request->file('image');
 
-        $filename = $validated['store']['name'] . '_' . Str::uuid7() . '.' . $image->getClientOriginalExtension();
+        $filename = $validated['store']['name'] . '_' . Str::uuid7();
 
         $validated['warehouse']['retrieval_time'] = $this->getDuration(
             $validated['address']['longitude'],
             $validated['address']['latitude']
         );
 
-        $store = Store::make($validated['store']);
+        $store = Store::create($validated['store']);
 
-        $store->image = $this->storeFile(
-            $store,
-            $image,
-            $filename
-        );
-
-        $store->save();
+        $store->update([
+            'image' => $this->storeFile(
+                $store,
+                $image,
+                $filename
+            )
+        ]);
 
         $store->warehouse()->create($validated['warehouse'])
             ->address()->create($validated['address']);
@@ -197,9 +197,7 @@ class StoreService
 
         $this->storeOwnerOrAdmin($store, $user);
 
-        $store->image = $this->fileUrl($store);
-
-        return $store;
+        return new StoreResource($store);
     }
 
     public function update(StoreUpdateRequest $request, Store $store)

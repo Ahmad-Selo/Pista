@@ -22,7 +22,7 @@ class FavoriteService
         throw_if(
             $user->favorites()->where('product_id', $product->id)->exists(),
             DuplicateViolation::class,
-            'product is already in user favorites'
+            'Product is already in user favorites'
         );
 
         $user->favorites()->attach($product->id);
@@ -35,7 +35,7 @@ class FavoriteService
         throw_unless(
             $user->favorites()->where('product_id', $product->id)->exists(),
             NotFoundException::class,
-            'product is not in user favorites'
+            'Product is not in user favorites'
         );
 
         $user->favorites()->detach($product->id);

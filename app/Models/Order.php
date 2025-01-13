@@ -6,12 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class Order extends Model
 {
-    public function products()
-    {
-        return $this->belongsToMany(Product::class)
-            ->withPivot('quantity', 'price')
-            ->withTimestamps();
-    }
+    protected $fillable=[
+        'user_id',
+        'price',
+        'state',
+        'total_sub_orders',
+        'completed_sub_orders',
+        'delivery_time'
+    ];
 
     public function user()
     {
@@ -21,5 +23,9 @@ class Order extends Model
     public function address()
     {
         return $this->morphOne(Address::class, 'addressable');
+    }
+
+    public function subOrders(){
+        return $this->hasMany(SubOrder::class);
     }
 }
