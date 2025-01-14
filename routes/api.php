@@ -16,13 +16,12 @@ Route::post('setNewPassword/checkCode',[UserController::class, 'checkCode']);
 Route::post('/setNewPassword',[UserController::class, 'setNewPassword']);
 Route::post('/register',[LoginController::class, 'register']);
 Route::post('/login',[LoginController::class, 'login']);
-Route::delete('/logout',[LoginController::class, 'logout'])->middleware('auth:sanctum');
 Route::prefix('/user')->middleware('auth:sanctum')->group(function(){
+    Route::delete('/logout',[LoginController::class, 'logout']);
     Route::post('/resetPassword',[UserController::class, 'resetPassword']);
-    Route::delete('/delete-account',[UserController::class, 'deleteAccount']);
+    Route::delete('/delete-account',[UserController::class, 'deleteAccount']);///////////////////////////////////
     Route::post('/',[UserController::class, 'update'])->name('update');
     Route::get('/',[UserController::class, 'show'])->name('show');
-    Route::post('/resetPassword',[UserController::class, 'resetPassword']);
 });
 Route::name('order.')->prefix('/order')->middleware('auth:sanctum')->group(function(){
     Route::prefix('/user')->group(function(){
