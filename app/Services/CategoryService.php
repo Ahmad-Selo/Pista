@@ -17,9 +17,9 @@ class CategoryService
 
     public function index()
     {
-        $categories = Category::latest()->paginate();
+        $categories = Category::latest();
 
-        return $categories;
+        return $categories->get();
     }
 
     public function store(CategoryRequest $request)

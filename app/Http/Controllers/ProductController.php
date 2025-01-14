@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ProductCreateRequest;
 use App\Http\Requests\ProductUpdateRequest;
+use App\Http\Requests\RateRequest;
+use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use App\Models\Store;
 use App\Services\ProductService;
@@ -90,6 +92,16 @@ class ProductController extends Controller
 
         return response()->json([
             'message' => 'Product deleted successfully',
+        ]);
+    }
+
+    public function rate(Product $product, RateRequest $request)
+    {
+        $result = $this->productService->rate($product, $request);
+
+        return response()->json([
+            'message' => 'Thank you for rating the product!',
+            'product' => new ProductResource($result),
         ]);
     }
 }

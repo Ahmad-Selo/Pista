@@ -49,6 +49,28 @@ class User extends Authenticatable
         ];
     }
 
+    public function orderedProducts()
+    {
+        return $this->orders()->with('subOrders.products');
+    }
+
+    public function hasOrderedProduct($product)
+    {
+        return $this->orders()->whereHas('subOrders.products', function ($query) use ($product) {
+            $query->where('id', '=', $product->id);
+        })->exists();
+    }
+
+    public function hasRatedProduct($product)
+    {
+        return $this->rates()->where('product_id', '=', $product->id)->exists();
+    }
+
+    public function rate($product)
+    {
+        return $this->rates()->firstWhere('product_id', '=', $product->id)->pivot->rate;
+    }
+
     public function stores()
     {
         return $this->hasMany(Store::class);

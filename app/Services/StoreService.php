@@ -12,6 +12,7 @@ use App\Http\Resources\StoreResource;
 use App\Models\Store;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -175,18 +176,20 @@ class StoreService
             $validated['address']['latitude']
         );
 
-        $store = Store::create($validated['store']);
+        DB::transaction(function () use ($validated, $image, $filename) {
+            $store = Store::create($validated['store']);
 
-        $store->update([
-            'image' => $this->storeFile(
+            $store->image = $this->storeFile(
                 $store,
                 $image,
                 $filename
-            )
-        ]);
+            );
 
-        $store->warehouse()->create($validated['warehouse'])
-            ->address()->create($validated['address']);
+            $store->warehouse()->create($validated['warehouse'])
+                ->address()->create($validated['address']);
+
+            $store->save();
+        });
 
         return true;
     }
