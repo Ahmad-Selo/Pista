@@ -318,10 +318,10 @@ class ProductService
             $orders = explode(' ', $order);
 
             foreach ($orders as $column) {
-                if (in_array($column, ['rate', 'price'])) {
+                if (in_array($column, ['rate', 'price'], true)) {
                     continue;
                 }
-                if (strcasecmp($column, 'rate')) {
+                if (strcmp($column, 'rate')) {
                     $query->orderByRate($direction);
                 } else {
                     $query->orderBy($column, $direction);
