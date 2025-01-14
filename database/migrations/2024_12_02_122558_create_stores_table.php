@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->string('name')->unique();
             $table->string('image')->nullable();
             $table->foreignIdFor(User::class)->constrained()->cascadeOnDelete();
+            $table->softDeletes();
             $table->timestamps();
         });
     }

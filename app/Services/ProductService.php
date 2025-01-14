@@ -252,8 +252,6 @@ class ProductService
 
         $this->ownProductOrAdmin($store, $user);
 
-        $this->deleteFile($product);
-
         return $product->delete();
     }
 

@@ -252,7 +252,7 @@ class StoreService
 
         $this->storeOwnerOrAdmin($store, $user);
 
-        $this->deleteDirectoryOrFile($store);
+        $store->products()->delete();
 
         return $store->delete();
     }
