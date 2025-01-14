@@ -108,7 +108,7 @@ class ProductService
         $products->whereNotNull('rate_sum')
             ->whereNotNull('rate_count')
             ->where('rate_count', '!=', 0)
-            ->orderByRaw('rate_sum / rate_count desc')
+            ->orderByRate('desc')
             ->take($limit);
 
         return ProductResource::collection($products->get());
@@ -284,15 +284,28 @@ class ProductService
         return $product->delete();
     }
 
-    public function search($q, $filter, $order, $direction)
+    public function search(Store|null $store, $q, $filter, $order, $direction)
     {
+        if (empty($store)) {
+            $query = Product::inStock();
+        } else {
+            $query = $store->products();
+        }
+
         $qLike = '%' . $q . '%';
-        $query = Product::inStock()->whereLike('name', $qLike);
+
+        $query->whereLike('name', $qLike);
 
         if ($filter) {
             $filters = explode(' ', $filter);
 
             $categories = $this->categoryService->filtersToCategories($filters);
+
+            if (in_array('discount', $filters)) {
+                $query->discounts();
+            } else if (in_array('full-price', $filters)) {
+                $query->fullPrices();
+            }
 
             $query->hasCategories($categories);
         }
@@ -305,7 +318,14 @@ class ProductService
             $orders = explode(' ', $order);
 
             foreach ($orders as $column) {
-                $query->orderBy($column, $direction);
+                if (in_array($column, ['rate', 'price'])) {
+                    continue;
+                }
+                if (strcasecmp($column, 'rate')) {
+                    $query->orderByRate($direction);
+                } else {
+                    $query->orderBy($column, $direction);
+                }
             }
         }
 

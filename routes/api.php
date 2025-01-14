@@ -30,7 +30,13 @@ Route::middleware('locale')->group(function () {
 
                     Route::get('/available', [StoreController::class, 'availableProducts'])->name('available');
 
-                    Route::post('/', [ProductController::class, 'store'])->name('store');
+                    Route::get('/search', [SearchController::class, 'storeProducts'])
+                        ->middleware('role:admin')
+                        ->name('search');
+
+                    Route::post('/', [ProductController::class, 'store'])
+                        ->middleware('role:admin')
+                        ->name('store');
 
                 });
 
@@ -53,7 +59,9 @@ Route::middleware('locale')->group(function () {
 
                 Route::get('/', [ProductController::class, 'show'])->name('show');
 
-                Route::post('/', [ProductController::class, 'update'])->name('update');
+                Route::post('/', [ProductController::class, 'update'])
+                    ->middleware('role:admin')
+                    ->name('update');
 
                 Route::delete('/', [ProductController::class, 'destroy'])->name('destroy');
 
@@ -80,7 +88,7 @@ Route::middleware('locale')->group(function () {
 
         Route::get('/home', HomeController::class)->name('home');
 
-        Route::get('/search', SearchController::class)->name('search');
+        Route::get('/search', [SearchController::class, 'products'])->name('search');
 
         Route::name('user.')->prefix('/users')->group(function () {
 

@@ -36,6 +36,11 @@ class Product extends Model
         );
     }
 
+    public function scopeOrderByRate($query, $direction)
+    {
+        return $query->orderByRaw('rate_sum / rate_count ' . $direction);
+    }
+
     protected function favorite(): Attribute
     {
         $user = Auth::user();
