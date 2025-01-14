@@ -2,9 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Category;
 use App\Models\Inventory;
-use App\Models\Offer;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\User;
@@ -21,9 +19,7 @@ class DatabaseSeeder extends Seeder
     {
         $users = User::factory(20)->create();
         $stores = Store::factory(10)->create();
-        $category=Category::factory(10)->create();
-        $products = Product::factory(10)->create();
-        $offer = Offer::factory(10)->create();
+        $products = Product::factory(100)->create();
 
         foreach ($stores as $store) {
             Warehouse::factory()->create([

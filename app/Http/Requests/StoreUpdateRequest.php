@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreUpdateRequest extends FormRequest
 {
@@ -22,10 +23,10 @@ class StoreUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'store_name' => ['string', 'max:255', 'unique:stores,name'],
+            'store_name' => ['string', 'max:255', Rule::unique('stores', 'name')->ignoreModel($this->store)],
             'image' => ['image', 'mimes:jpg,jpeg,png', 'max:4096'],
             'user_id' => ['numeric', 'integer', 'min:1', 'exists:users,id'],
-            'warehouse_name' => ['string', 'max:255', 'unique:warehouses,name'],
+            'warehouse_name' => ['string', 'max:255', Rule::unique('warehouses', 'name')->ignoreModel($this->store->warehouse)],
             'address_name' => ['string', 'max:255'],
             'longitude' => ['required_with:address_name', 'numeric', 'between:-90,90'],
             'latitude' => ['required_with:address_name', 'numeric', 'between:-180,180'],

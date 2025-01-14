@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class ProductUpdateRequest extends FormRequest
 {
@@ -24,8 +25,10 @@ class ProductUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['string', 'max:255', 'unique:products,name'],
+            'name' => ['string', 'max:255', Rule::unique('products', 'name')->ignoreModel($this->product)],
+            'name_ar' => ['string', 'max:255'],
             'description' => ['string', 'max:255'],
+            'description_ar' => ['string', 'max:255'],
             'price' => ['numeric', 'gt:0'],
             'image' => ['image', 'mimes:jpg,jpeg,png', 'max:4096'],
             'category' => ['string', 'max:255', 'exists:categories,name'],

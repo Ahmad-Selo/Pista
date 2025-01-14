@@ -5,11 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
 
 class Product extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -43,6 +44,12 @@ class Product extends Model
             get: fn(mixed $value, array $attributes) =>
             $user->favorites()->where('product_id', $attributes['id'])->exists()
         );
+    }
+
+    public function translate($column, $locale)
+    {
+        return $this->translations()->where('key', '=', 'product.' . $column)
+            ->where('locale', '=', $locale)->value('translation');
     }
 
     public function translations()

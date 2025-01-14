@@ -24,6 +24,7 @@ return new class extends Migration
             $table->string('image');
             $table->float('rate_sum')->nullable();
             $table->unsignedInteger('rate_count')->nullable();
+            $table->softDeletes();
             $table->timestamps();
         });
     }

@@ -6,6 +6,7 @@ use App\Enums\Role;
 use App\Facades\FileManager;
 use App\Http\Requests\ProductCreateRequest;
 use App\Http\Requests\ProductUpdateRequest;
+use App\Http\Requests\RateRequest;
 use App\Http\Resources\ProductResource;
 use App\Models\Category;
 use App\Models\Product;
@@ -13,6 +14,7 @@ use App\Models\Store;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
@@ -144,13 +146,9 @@ class ProductService
         return $store->user->id == $user->id;
     }
 
-    private function ownProductOrAdmin(Store $store, User $user): void
+    private function ownProductOrAdmin(Store $store, User $user): bool
     {
-        throw_if(
-            !$this->ownership($store, $user) && !$user->hasRole(Role::ADMIN),
-            AccessDeniedHttpException::class,
-            'access denied',
-        );
+        return ($this->ownership($store, $user) || $user->hasRole(Role::ADMIN));
     }
 
     public function index()
@@ -190,6 +188,19 @@ class ProductService
         if (isset($validated['discount'])) {
             $product->offer()->create($validated);
         }
+
+        $product->translations()->createMany([
+            [
+                'key' => 'product.name',
+                'locale' => 'ar',
+                'translation' => $validated['name_ar'],
+            ],
+            [
+                'key' => 'product.description',
+                'locale' => 'ar',
+                'translation' => $validated['description_ar']
+            ]
+        ]);
 
         return true;
     }
@@ -241,18 +252,34 @@ class ProductService
             $product->updateOrCreateOffer($validated);
         }
 
+        if (isset($validated['name_ar'])) {
+            $product->translations()->where('key', '=', 'product.name')
+                ->where('locale', '=', 'ar')->update([
+                        'translation' => $validated['name_ar']
+                    ]);
+        }
+
+        if (isset($validated['description_ar'])) {
+            $product->translations()->where('key', '=', 'product.description')->
+                where('locale', '=', 'ar')->update([
+                        'translation' => $validated['description_ar']
+                    ]);
+        }
+
         return $product->update($validated);
     }
 
     public function destroy(Product $product)
     {
-        $user = Auth::user();
+        $user = User::find(Auth::id());
 
         $store = $product->store;
 
-        $this->ownProductOrAdmin($store, $user);
-
-        $this->deleteFile($product);
+        throw_unless(
+            $this->ownProductOrAdmin($store, $user),
+            AccessDeniedHttpException::class,
+            'access denied',
+        );
 
         return $product->delete();
     }
@@ -283,6 +310,41 @@ class ProductService
         }
 
         return $query->get();
+    }
+
+    public function rate(Product $product, RateRequest $request)
+    {
+        $validated = $request->validated();
+
+        $user = User::find(Auth::id());
+
+        throw_if(
+            $this->ownProductOrAdmin($product->store, $user) || !$user->hasOrderedProduct($product),
+            AccessDeniedHttpException::class,
+            'access denied',
+        );
+
+        DB::transaction(function () use ($validated, $user, $product) {
+            if ($user->hasRatedProduct($product)) {
+                $rate = $user->rate($product);
+
+                $product->rate_sum += $validated['rate'] - $rate;
+
+                $user->rates()->updateExistingPivot($product->id, $validated);
+            } else {
+                $user->rates()->attach(
+                    $product->id,
+                    ['rate' => $validated['rate']]
+                );
+
+                $product->rate_sum += $validated['rate'];
+                $product->rate_count++;
+            }
+
+            $product->save();
+        });
+
+        return $product;
     }
 }
 

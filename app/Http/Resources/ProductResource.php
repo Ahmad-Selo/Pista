@@ -7,6 +7,7 @@ use App\Services\ProductService;
 use App\Services\StoreService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\App;
 
 class ProductResource extends JsonResource
 {
@@ -17,6 +18,13 @@ class ProductResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $locale = App::getLocale();
+
+        if ($locale == 'ar') {
+            $this->name = $this->translate('name', $locale);
+            $this->description = $this->translate('description', $locale);
+        }
+
         $path = StoreService::UPLOAD_PATH . $this->store->id . ProductService::UPLOAD_PATH;
 
         return [
