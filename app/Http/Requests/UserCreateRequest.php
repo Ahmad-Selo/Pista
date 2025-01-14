@@ -24,7 +24,7 @@ class UserCreateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'phone'=>['required','digits:10', 'regex:/^[0-9]+$/','unique:users,phone'],
+            'phone'=>['required','digits:10', 'regex:/^[0-9]+$/','unique:users,phone','starts_with:09'],
             'password'=>['required','confirmed','max:30','min:8','regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/'],
             'first_name'=>['required','max:20','min:3'],
             'last_name'=>['required','max:20','min:2'],
