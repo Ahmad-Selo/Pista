@@ -189,6 +189,19 @@ class ProductService
             $product->offer()->create($validated);
         }
 
+        $product->translations()->createMany([
+            [
+                'key' => 'product.name',
+                'locale' => 'ar',
+                'translation' => $validated['name_ar'],
+            ],
+            [
+                'key' => 'product.description',
+                'locale' => 'ar',
+                'translation' => $validated['description_ar']
+            ]
+        ]);
+
         return true;
     }
 
@@ -237,6 +250,20 @@ class ProductService
 
         if (isset($validated['discount'])) {
             $product->updateOrCreateOffer($validated);
+        }
+
+        if (isset($validated['name_ar'])) {
+            $product->translations()->where('key', '=', 'product.name')
+                ->where('locale', '=', 'ar')->update([
+                        'translation' => $validated['name_ar']
+                    ]);
+        }
+
+        if (isset($validated['description_ar'])) {
+            $product->translations()->where('key', '=', 'product.description')->
+                where('locale', '=', 'ar')->update([
+                        'translation' => $validated['description_ar']
+                    ]);
         }
 
         return $product->update($validated);

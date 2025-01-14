@@ -13,6 +13,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use App\Http\Requests\OrderCreateRequest;
+use App\Http\Resources\OrderProductsResource;
+use App\Http\Resources\OrderResource;
+use App\Http\Resources\ProductResource;
+use App\Http\Resources\StoreResource;
+use App\Http\Resources\SubOrderResource;
+use App\Http\Resources\UserResource;
 use App\Models\Warehouse;
 use Carbon\Carbon;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -34,6 +40,7 @@ class OrderController extends Controller
 
     public function store(OrderCreateRequest $request)
     {
+        return $request;
         if (!count($request->data)) {
             return response()->json(["message" => "There is no item"], 401);
         }
@@ -62,7 +69,7 @@ class OrderController extends Controller
 
         foreach ($products as $product) {
             if ($product->inventory()->first()->quantity - $quantities[$product->id] < 0) {
-                DB::rollback();
+                $general_order->delete();
                 return response()->json(["message" => "Invalid Order"], 401);
             }
             $inventory_retrieval_time = Warehouse::where('store_id', $product->store()->first()->id)->first()->retrieval_time;
@@ -101,7 +108,7 @@ class OrderController extends Controller
 
     public function update($orderId)
     {
-        $order = $this->deleteOrder($orderId);
+        $order=$this->deleteOrder($orderId);
         return response()->json($order, 200);
     }
 
@@ -131,7 +138,7 @@ class OrderController extends Controller
             $order = $subOrder->order()->first();
             foreach ($order->subOrders()->get() as $subOrder) {
                 if ($subOrder->state < 1) {
-                    return response()->json(["message" => "Some products did not prepared yet"], 200);
+                    return response()->json(["message" => "Some products did not prepared yet"], 401);
                 }
             }
             $order->update([
@@ -193,9 +200,8 @@ class OrderController extends Controller
     private function bringOrders($id, $state)
     {
         $orders = Order::where('user_id', $id)->where('state', $state)->with('subOrders.products')->with('address')->get();
-
         $bringOrders = $this->getProducts($orders);
-        return $bringOrders;
+        return OrderResource::collection($bringOrders);
     }
 
     private function bringSubOrders($stores, $state)
@@ -204,16 +210,17 @@ class OrderController extends Controller
         foreach ($stores as $store) {
             $index[] = $store->id;
         }
-        $subOrders = SubOrder::whereIn('store_id', $index)->where('state', $state)->with('products')->get();
+        $subOrders = SubOrder::whereIn('store_id', $index)->where('state', $state)->get();
 
         $subOrdersWithUsers = $subOrders->map(
             function ($subOrder) {
                 $order = clone $subOrder->order()->first();
-                $subOrder->user = $order->user()->first();
+                $subOrder->user = new UserResource($order->user()->first());
+                $subOrder->products= ProductResource::collection($subOrder->products()->get());
                 return $subOrder;
             }
         );
-        return $subOrdersWithUsers;
+        return SubOrderResource::collection($subOrdersWithUsers);
     }
 
     private function deleteOrder($orderId)
@@ -222,7 +229,7 @@ class OrderController extends Controller
         $allProducts = $this->getProducts($order);
         $this->editQuantityWhenDeleteOrder($allProducts->first()->products);
         $order->first()->delete();
-        return $allProducts;
+        return new OrderResource($allProducts[0]);
     }
 
     private function getProducts($orders)
@@ -234,7 +241,8 @@ class OrderController extends Controller
             foreach (clone $order->subOrders as $subOrder) {
                 $products = $subOrder->products->map(function ($product) {
                     $product->pivotQuantity = $product->pivot->quantity;
-                    return $product;
+                    $product->store=new StoreResource($product->store()->first());
+                    return new OrderProductsResource($product);
                 });
                 $productsArray = array_merge($productsArray, ($products)->toArray());
             }

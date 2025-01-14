@@ -23,7 +23,7 @@ class UserLoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'phone'=>['required','digits:10', 'regex:/^[0-9]+$/'],
+            'phone'=>['required','digits:10', 'regex:/^[0-9]+$/','starts_with:09'],
             'password'=>['required','max:30','min:8','regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/'],
         ];
     }

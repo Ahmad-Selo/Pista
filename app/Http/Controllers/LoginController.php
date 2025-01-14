@@ -14,7 +14,7 @@ class LoginController extends Controller
 {
     public function register(UserCreateRequest $request)
     {
-        $phone = $this->transformPhoneNumber($request->phone);
+        $phone= $request->phone;
         $verificationCode = VerificationCode::where('phone', $phone)->latest()->first();
         if (!($verificationCode && $verificationCode->code == $request->code)) {
             return response()->json(['message' => 'Invalid code'], 403);
@@ -25,6 +25,7 @@ class LoginController extends Controller
             'password' => Hash::make($request->password),
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
+            'phone_verified_at'=>now()
         ]);
         $validated = $request->validated();
         $user->address()->create($validated['address']);

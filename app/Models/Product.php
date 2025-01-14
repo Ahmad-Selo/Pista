@@ -46,6 +46,12 @@ class Product extends Model
         );
     }
 
+    public function translate($column, $locale)
+    {
+        return $this->translations()->where('key', '=', 'product.' . $column)
+            ->where('locale', '=', $locale)->value('translation');
+    }
+
     public function translations()
     {
         return $this->morphMany(Translation::class, 'translateable');

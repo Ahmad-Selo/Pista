@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Http\Requests\UserUpdateRequest;
 use App\Http\Requests\CheckPasswordRequest;
+use App\Http\Resources\UserResource;
 use App\Models\VerificationCode;
 use Illuminate\Support\Facades\Http;
 
@@ -30,8 +31,7 @@ class UserController extends Controller
 
     public function show(Request $request)
     {
-        $user = request()->user();
-        $user->photo = $this->fileUrl($user);
+        $user = new UserResource(request()->user());
         return response()->json($user, 200);
     }
 

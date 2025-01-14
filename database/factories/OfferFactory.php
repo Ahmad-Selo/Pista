@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Product;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -20,6 +21,7 @@ class OfferFactory extends Factory
             'discount' => fake()->numberBetween(0, 99),
             'started_at' => fake()->dateTimeBetween('-1 year', '+1 year'),
             'ended_at' => fake()->dateTimeBetween('+1 year', '+2 year'),
+            'product_id'=>Product::pluck('id')->random()
         ];
     }
 }

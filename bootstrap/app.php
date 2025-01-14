@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\Role::class,
             'ownership' => \App\Http\Middleware\Ownership::class,
+            'locale' => \App\Http\Middleware\Locale::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
