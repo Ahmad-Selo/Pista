@@ -196,7 +196,7 @@ class StoreService
 
     public function show(Store $store)
     {
-        $user = Auth::user();
+        $user = User::find(Auth::id());
 
         $this->storeOwnerOrAdmin($store, $user);
 
@@ -251,7 +251,7 @@ class StoreService
 
     public function destroy(Store $store)
     {
-        $user = Auth::user();
+        $user = User::find(Auth::id());
 
         $this->storeOwnerOrAdmin($store, $user);
 

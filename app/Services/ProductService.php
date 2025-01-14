@@ -271,7 +271,7 @@ class ProductService
 
     public function destroy(Product $product)
     {
-        $user = Auth::user();
+        $user = User::find(Auth::id());
 
         $store = $product->store;
 
