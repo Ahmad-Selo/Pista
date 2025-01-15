@@ -15,7 +15,6 @@ class SearchController extends Controller
 {
     private StoreService $storeService;
     private ProductService $productService;
-
     private CategoryService $categoryService;
 
     public function __construct(StoreService $storeService, ProductService $productService, CategoryService $categoryService)
@@ -44,7 +43,7 @@ class SearchController extends Controller
 
     public function products(Request $request)
     {
-        $categories = $this->categoryService->index();
+        $categories = $this->categoryService->index(true);
         $stores = $this->storeService->search($request->q, $request->filter);
         $products = $this->productService->search(
             null,

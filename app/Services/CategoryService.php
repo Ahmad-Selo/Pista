@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Http\Requests\CategoryRequest;
+use App\Http\Resources\CategoryResource;
 use App\Models\Category;
+use Illuminate\Support\Facades\DB;
 
 class CategoryService
 {
@@ -15,25 +17,48 @@ class CategoryService
         return $categories;
     }
 
-    public function index()
+    public function index(bool $withoutEmpty = false)
     {
-        $categories = Category::latest();
+        if ($withoutEmpty) {
+            $categories = Category::withoutEmpty();
+        } else {
+            $categories = Category::latest();
+        }
 
-        return $categories->get();
+        return CategoryResource::collection($categories->get());
     }
 
     public function store(CategoryRequest $request)
     {
         $validated = $request->validated();
 
-        return Category::create($validated);
+        DB::transaction(function () use ($validated) {
+            $category = Category::create($validated);
+            
+            $category->translations()->create([
+                'key' => 'category.name',
+                'locale' => 'ar',
+                'translation' => $validated['name_ar']
+            ]);
+        });
+
+        return true;
     }
 
     public function update(Category $category, CategoryRequest $request)
     {
         $validated = $request->validated();
 
-        return $category->update($validated);
+        DB::transaction(function () use ($category, $validated) {
+            $category->update($validated);
+
+            $category->translations()->where('key', '=', 'category.name')
+                ->where('locale', '=', 'ar')->update([
+                        'translation' => $validated['name_ar']
+                    ]);
+        });
+
+        return true;
     }
 
     public function destroy(Category $category)

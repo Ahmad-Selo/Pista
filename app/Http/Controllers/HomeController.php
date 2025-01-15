@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\CategoryResource;
-use App\Models\Category;
+use App\Services\CategoryService;
 use App\Services\ProductService;
 use App\Services\StoreService;
 use Illuminate\Http\Request;
@@ -14,20 +13,23 @@ class HomeController extends Controller
 
     private ProductService $productService;
 
-    public function __construct(StoreService $storeService ,ProductService $productService)
+    private CategoryService $categoryService;
+
+    public function __construct(StoreService $storeService, ProductService $productService, CategoryService $categoryService)
     {
-        $this->productService = $productService;
         $this->storeService = $storeService;
+        $this->productService = $productService;
+        $this->categoryService = $categoryService;
     }
 
     public function __invoke(Request $request)
     {
-        $result = $this->productService->highlights(5 ,$request->filter);
+        $result = $this->productService->highlights(5, $request->filter);
 
         $result['brands'] = $this->storeService->newest(5, $request->filter);
 
-        $result['categories'] = CategoryResource::collection(Category::all());
+        $result['categories'] = $this->categoryService->index(true);
 
-        return $result;
+        return response()->json($result);
     }
 }

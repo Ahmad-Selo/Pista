@@ -19,15 +19,17 @@ class OrderProductsResource extends JsonResource
     {
         $path = StoreService::UPLOAD_PATH . $this->store->id . ProductService::UPLOAD_PATH;
         return [
-            'name'=>$this->name,
-            'description'=>$this->description,
-            'price'=>$this->price,
-            'image'=>FileManager::url($path, $this->image),
-            'quantity'=>$this->quantity,
-            'rate'=>$this->rate,
-            'selected quantity'=>$this->pivotQuantity,
+            'id' => $this->id,
+            'name' => $this->name,
+            'description' => $this->description,
+            'price' => $this->price,
+            'discount' => $this->offer?->discount,
+            'image' => FileManager::url($path, $this->image),
+            'quantity' => $this->quantity,
+            'rate' => $this->rate,
+            'selected quantity' => $this->pivotQuantity,
             'is_favorite' => $this->favorite,
-            'store'=> $this->store,
+            'store' => $this->store,
         ];
     }
 }

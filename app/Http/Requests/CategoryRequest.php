@@ -14,7 +14,7 @@ class CategoryRequest extends FormRequest
     public function authorize(): bool
     {
         $user = Auth::user();
-        return $user->hasRole(Role::ADMIN);
+        return $user->hasRole(Role::OWNER);
     }
 
     /**
@@ -26,6 +26,7 @@ class CategoryRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255', 'unique:categories,name'],
+            'name_ar' => ['required', 'string', 'max:255']
         ];
     }
 }

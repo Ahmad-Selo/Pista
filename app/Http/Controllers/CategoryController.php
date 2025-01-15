@@ -25,7 +25,7 @@ class CategoryController extends Controller
     {
         $categories = $this->categoryService->index();
 
-        return $categories;
+        return response()->json($categories);
     }
 
     public function store(CategoryRequest $request)

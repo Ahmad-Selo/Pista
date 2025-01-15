@@ -9,6 +9,7 @@ use App\Http\Requests\StoreUpdateRequest;
 use App\Http\Resources\CategoryResource;
 use App\Http\Resources\ProductResource;
 use App\Http\Resources\StoreResource;
+use App\Models\Category;
 use App\Models\Store;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -155,7 +156,9 @@ class StoreService
             $products->hasCategories($categories)->get();
         }
 
-        $storeCategories = $store->categories()->distinct();
+        $storeCategories = Category::whereHas('products.inventory', function ($query) use ($store) {
+            $query->where('store_id', $store->id)->where('quantity', '>', 0);
+        });
 
         return [
             'categories' => CategoryResource::collection($storeCategories->get()),
