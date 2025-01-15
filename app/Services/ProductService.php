@@ -146,9 +146,9 @@ class ProductService
         return $store->user->id == $user->id;
     }
 
-    private function ownProductOrAdmin(Store $store, User $user): bool
+    private function ownProductOrOwner(Store $store, User $user): bool
     {
-        return ($this->ownership($store, $user) || $user->hasRole(Role::ADMIN));
+        return ($this->ownership($store, $user) || $user->hasRole(Role::OWNER));
     }
 
     public function index()
@@ -276,7 +276,7 @@ class ProductService
         $store = $product->store;
 
         throw_unless(
-            $this->ownProductOrAdmin($store, $user),
+            $this->ownProductOrOwner($store, $user),
             AccessDeniedHttpException::class,
             'access denied',
         );
@@ -339,9 +339,21 @@ class ProductService
         $user = User::find(Auth::id());
 
         throw_if(
-            $this->ownProductOrAdmin($product->store, $user) || !$user->hasOrderedProduct($product),
+            $user->hasRole(Role::OWNER),
             AccessDeniedHttpException::class,
-            'access denied',
+            'You are the owner you cannot rate the products'
+        );
+
+        throw_if(
+            $this->ownProductOrOwner($product->store, $user),
+            AccessDeniedHttpException::class,
+            'You cannot rate your own products',
+        );
+
+        throw_unless(
+            $user->hasOrderedProduct($product),
+            AccessDeniedHttpException::class,
+            'You cannot rate a product you did not order'
         );
 
         DB::transaction(function () use ($validated, $user, $product) {

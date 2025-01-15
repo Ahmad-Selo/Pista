@@ -40,7 +40,6 @@ class OrderController extends Controller
 
     public function store(OrderCreateRequest $request)
     {
-        return $request;
         if (!count($request->data)) {
             return response()->json(["message" => "There is no item"], 401);
         }
@@ -53,11 +52,11 @@ class OrderController extends Controller
         $retrieval_time = 0;
 
         foreach ($request->data as $product) {
-            if ($product['quantity'] < 1) {
+            if (intval($product['quantity']) < 1) {
                 continue;
             }
-            $index[] = $product['id'];
-            $quantities[$product['id']] = $product['quantity'];
+            $index[] = intval($product['id']);
+            $quantities[intval($product['id'])] = intval($product['quantity']);
         }
 
         if (empty($index)) {
@@ -83,7 +82,7 @@ class OrderController extends Controller
             $offer = $product->offer()->first();
 
             if ($offer && $offer->started_at->lt(Carbon::now()) && $offer->ended_at->gt(Carbon::now())) {
-                $price = $quantities[$product->id] * ($product->price - $offer->discount);
+                $price = $quantities[$product->id] * ($product->price *($offer->discount/100.0));
             } else {
                 $price = $quantities[$product->id] * ($product->price);
             }

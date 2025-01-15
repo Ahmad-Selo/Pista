@@ -24,6 +24,7 @@ class User extends Authenticatable
         'last_name',
         'phone',
         'password',
+        'phone_verified_at'
     ];
 
     /**
@@ -46,7 +47,7 @@ class User extends Authenticatable
         return [
             'created_at' => 'datetime:Y-m-d H:i:s',
             'updated_at' => 'datetime:Y-m-d H:i:s',
-            'phone_verified_at' => 'datetime',
+            'phone_verified_at' => 'datetime:Y-m-d H:i:s',
             'password' => 'hashed',
         ];
     }

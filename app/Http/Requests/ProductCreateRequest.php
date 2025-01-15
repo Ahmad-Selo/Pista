@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 
@@ -12,7 +13,7 @@ class ProductCreateRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        $user = Auth::user();
+        $user = User::find(Auth::id());
         return ($this->store->user->id == $user->id);
     }
 
@@ -31,9 +32,9 @@ class ProductCreateRequest extends FormRequest
             'price' => ['required', 'numeric', 'gt:0'],
             'image' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:4096'],
             'category' => ['required', 'string', 'max:255', 'exists:categories,name'],
-            'discount' => ['numeric', 'integer', 'between:0,99'],
-            'started_at' => ['required_with:discount', 'date_format:Y-m-d H:i:s', 'after_or_equal:now'],
-            'ended_at' => ['required_with:discount', 'date_format:Y-m-d H:i:s', 'after:started_at'],
+            'discount' => ['nullable', 'numeric', 'integer', 'between:0,99'],
+            'started_at' => ['nullable', 'required_with:discount', 'date_format:Y-m-d H:i:s', 'after_or_equal:now'],
+            'ended_at' => ['nullable', 'required_with:discount', 'date_format:Y-m-d H:i:s', 'after:started_at'],
             'quantity' => ['required', 'numeric', 'integer', 'min:0'],
         ];
     }

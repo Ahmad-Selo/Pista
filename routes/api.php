@@ -115,6 +115,7 @@ Route::middleware('locale')->group(function () {
     Route::post('/setNewPassword', [UserController::class, 'setNewPassword']);
     Route::post('/register', [LoginController::class, 'register']);
     Route::post('/login', [LoginController::class, 'login']);
+    Route::post('/loginAdmin',[LoginController::class, 'loginAdmin']);
 
     Route::prefix('/user')->middleware('auth:sanctum')->group(function () {
         Route::post('/resetPassword', [UserController::class, 'resetPassword']);
@@ -131,7 +132,7 @@ Route::middleware('locale')->group(function () {
             Route::delete('/{orderId}', [OrderController::class, 'destroy'])->name('delete');
         });
 
-        Route::name('store.')->prefix('/store')->middleware('auth:sanctum')->group(function () {
+        Route::name('store.')->prefix('/store')->middleware('auth:sanctum')->middleware('role:admin')->group(function () {
             Route::get('/', [OrderController::class, 'ShowSubOrders'])->name('index');
             Route::patch('/{subOrderId}/updateState', [OrderController::class, 'updateState'])->name('updateState');
         });
